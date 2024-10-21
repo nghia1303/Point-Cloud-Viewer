@@ -1,0 +1,11 @@
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednesday.csproj.AssemblyReference.cache
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednesday.Form1.resources
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednesday.Properties.Resources.resources
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednesday.csproj.GenerateResource.cache
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednesday.csproj.CoreCompileInputs.cache
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\byWednesday.exe.config
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\byWednesday.exe
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\byWednesday.pdb
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednes.E0029648.Up2Date
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednesday.exe
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\byWednesday.pdb

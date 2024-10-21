@@ -1,80 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-
-using laszip.net;
-
+﻿using laszip.net;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
-using OpenTK.Input;
-using OpenTK.Platform;
+using PointCloudViewer.src;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
-namespace byWednesday
+namespace PointCloudViewer
 {
-    struct Point3DExt
+    internal struct Point3DExt
     {
         public Vector3d point;
         public double flag;
     }
+
     public partial class Form1 : Form
     {
-        #region 类成员变量
-        bool bOpenGLInitial = false;//确保OpenGL已经初始化
-        
-        int ptSize = 1;//点的大小
-        
-        double transX = 0; //平移尺寸
-        double transY = 0;
-        
-        double angleX = 0; //旋转角度
-        double angleY = 0;
-        
-        float scaling = 1.0f;//图形大小
-        
-        string paint_object = "las";//打开文件
-        
-        bool show_octree_outline = false;//是否画包围盒
-        
-        double[,] mFrustum = new double[6, 4];//视景体
-        
-        bool bLeftButtonPushed = false;//鼠标状态
-        bool bRightButtonPushed = false;
+        #region Global Variable
 
-        Point leftButtonPosition; //Point是C#的类，管理三维
-        Point RightButtonPosition;
+        private bool bOpenGLInitial = false;
+        private int pointSize = 1;
+        private double transX = 0;
+        private double transY = 0;
+        private double angleX = 0;
+        private double angleY = 0;
+        private float scaling = 1.0f;
+        private string primtiveObject = "las";
+        private bool showTreeNodeOutline = false;
+        private double[,] mFrustum = new double[6, 4];
+        private bool bLeftButtonPushed = false;
+        private bool bRightButtonPushed = false;
+        private Point leftButtonPosition;
+        private Point RightButtonPosition;
+        private PointCloudOctree pco;
+        private string pointCloudColor = "rainbow";
+        private bool calculateTwoPointsDistance = false;
+        private List<Point3DExt> two_points = new List<Point3DExt>(2);
+        private int num_two_points = -1;
+        private float fov = (float)Math.PI / 3.0f;
+        private bool perspectiveProjection = false;
+        private bool hasLas = false;
+        private Shader shader;
+        private Renderer renderer;
+        #endregion Global Variable
 
-        PointCloudOctree pco;//八叉树对象
+        #region Window Functions
 
-        string point_cloud_color = "rainbow";//选择渲染颜色
-
-        bool calculate_distance_between_points = false;//是否计算两点距离
-        List<Point3DExt> two_points = new List<Point3DExt>(2);//长度为2，存放要求距离的点
-        int num_two_points = -1;//判断选中的点是第几个
-
-        //投影相关
-        float fov = (float)Math.PI / 3.0f; //视角
-        bool perspective_projection = false; //选择投影方式，默认正交
-
-        #endregion
-
-        #region 窗体函数
         public Form1()
         {
             InitializeComponent();
-            glControl1.MouseWheel += new MouseEventHandler(glControl1_MouseWheel);//鼠标滚轮事件
-
-            //double[,] mFrustum = new double[6, 4];//视景体
+            glControl1.MouseWheel += new MouseEventHandler(glControl1_MouseWheel);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -84,7 +64,7 @@ namespace byWednesday
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            Render(ptSize, show_octree_outline, point_cloud_color);
+            Render(pointSize, showTreeNodeOutline, pointCloudColor);
         }
 
         private void Form1_Resize(object sender, EventArgs e)
@@ -92,17 +72,16 @@ namespace byWednesday
             if (bOpenGLInitial)
             {
                 SetupViewport();
-                Invalidate();//刷新 如果是glcontrolPaint glControl1.Invalidate
+                Invalidate();
             }
         }
-        
-        #endregion
 
-        #region Draw函数
+        #endregion Window Functions
+
+        #region Draw
+
         private void DrawTriangle()
         {
-            /*新旧版OpenTK语法有差别（设置要画的是什么物体，这里是线构成的环状线条，
-             * Begin和end一起出现）*/
             GL.Begin(PrimitiveType.Triangles);
             GL.Color4(Color4.Yellow);
             GL.Vertex3(0, 0, 0);
@@ -123,7 +102,7 @@ namespace byWednesday
             int v = 0;
             double xx, yy, zz;
 
-            GL.PointSize(ptSize);
+            GL.PointSize(pointSize);
             GL.Begin(PrimitiveType.Points);
             GL.Color4(Color4.Yellow);
             for (int z = -halfZHeight; z <= halfZHeight; z++)
@@ -142,12 +121,12 @@ namespace byWednesday
             GL.End();
         }
 
-        private void DrawPointClout()
+        private void DrawPointCloud()
         {
             /*if (points == null)
                 return;
 
-            GL.PointSize(ptSize);//控制点的大小
+            GL.PointSize(pointSize);
 
             GL.Begin(PrimitiveType.Points);
 
@@ -162,17 +141,16 @@ namespace byWednesday
 
             GL.End();*/
         }
-        #endregion
 
-        #region 基本功能，绘制渲染
+        #endregion Draw
+
         private void InitialGL()
         {
-            GL.ShadeModel(ShadingModel.Smooth); // 启用平滑渲染。默认
-            GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 黑色背景。默认
-            GL.ClearDepth(1.0f); // 设置深度缓存。默认1
-            GL.Enable(EnableCap.DepthTest); // 启用深度测试。默认关闭
+            //GL.ShadeModel(ShadingModel.Smooth);
+            GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            GL.ClearDepth(1.0f);
+            GL.Enable(EnableCap.DepthTest);
             SetupViewport();
-
             bOpenGLInitial = true;
         }
 
@@ -181,73 +159,67 @@ namespace byWednesday
             int w = glControl1.ClientSize.Width;
             int h = glControl1.ClientSize.Height;
 
-            GL.MatrixMode(MatrixMode.Projection); // 后面将对投影做操作
+            GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
 
             double aspect;
 
-            if (perspective_projection) //透视投影
+            if (perspectiveProjection)
             {
                 aspect = w / (double)h;
-                like_gluPerspective(fov, aspect, 0.001, 10);
                 GL.Viewport(0, 0, w, h);
+                like_gluPerspective(fov, aspect, -10, 100);
             }
-            else //正交投影
+            else
             {
                 aspect = (w >= h) ? (1.0 * w / h) : (1.0 * h / w);
                 if (w <= h)
-                    GL.Ortho(-1, 1, -aspect, aspect, -1, 1); //宽小于高，扩大Y
+                    GL.Ortho(-1, 1, -aspect, aspect, -10, 10);
                 else
-                    GL.Ortho(-aspect, aspect, -1, 1, -1, 1); //宽大于高，扩大X
+                    GL.Ortho(-aspect, aspect, -1, 1, -10, 10);
                 GL.Viewport(0, 0, w, h);
             }
         }
 
-        private void Render(int point_size, bool ShowOctreeOutline, string PointCloudColor)//（绘图）
+        private void Render(int point_size, bool ShowOctreeOutline, string PointCloudColor)
         {
-            glControl1.MakeCurrent(); //后续OpenGL显示操作在当前控件窗口内进行
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            //清除当前帧已有内容，清除深度测试缓冲区
 
-            //绘图矩阵
-            GL.MatrixMode(MatrixMode.Projection); // 后面将对投影做操作（矩阵操作对投影）
-            GL.LoadIdentity();//（调用单位矩阵）
 
-            //图形变换
-            if (perspective_projection)
-                GL.Translate(transX, transY, -1); //平移
-            else
-                GL.Translate(transX, transY, 0);
-            GL.Rotate(angleY, 1, 0, 0); //旋转
-            GL.Rotate(angleX, 0, 1, 0);
-            GL.Scale(scaling, scaling, scaling);//缩放
+            //GL.MatrixMode(MatrixMode.Projection);
+            //GL.LoadIdentity();
 
-            CalculateFrustum();
+            //if (perspectiveProjection)
+            //    GL.Translate(transX / 5, transY / 5, -1);
+            //else
+            //    GL.Translate(transX / 5, transY / 5, 0);
+            //GL.Rotate(angleY, 1, 0, 0);
+            //GL.Rotate(angleX, 0, 1, 0);
+            //GL.Scale(scaling, scaling, scaling);
 
-            //绘图函数
-            if (paint_object == "las")
+            //CalculateFrustum();
+            if (primtiveObject == "las")
             {
                 if (pco != null)
                 {
-                    pco.Render(point_size, ShowOctreeOutline, PointCloudColor, mFrustum);//现在还没有，八叉树自己的绘图函数
+                    glControl1.MakeCurrent();
+                    GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                    GL.Viewport(0, 0, glControl1.ClientSize.Width, glControl1.ClientSize.Height);
+                    shader.Use();
+                    renderer.Draw(shader);
                 }
             }
-            else if (paint_object == "sphere")
+            else if (primtiveObject == "sphere")
             {
                 DrawSphere();
             }
-            else if (paint_object == "triangle")
+            else if (primtiveObject == "triangle")
             {
                 DrawTriangle();
             }
 
-
-            glControl1.SwapBuffers(); /*交换缓冲区。双缓冲绘制时，所有的绘制都是绘制到后台缓冲区里，如果不交换缓冲区，就看不到绘制内容。OpenTK 默认双缓冲（不让屏幕产生晃动，先画到内存缓冲区，再到屏幕）*/
+            glControl1.SwapBuffers();
         }
 
-        #endregion
-
-        #region 视景体
         public void CalculateFrustum()
         {
             Matrix4 projectionMatrix = new Matrix4();
@@ -357,9 +329,8 @@ namespace byWednesday
             frustum[side, 3] /= magnitude;
         }
 
-        #endregion
+        #region Mouse Events
 
-        #region 鼠标操作
         private void glControl1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -382,14 +353,14 @@ namespace byWednesday
 
         private void glControl1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (bLeftButtonPushed)//左键控制平移物体
+            if (bLeftButtonPushed)
             {
-                transX += (e.Location.X - leftButtonPosition.X) / 120.0; //比例自己试
+                transX += (e.Location.X - leftButtonPosition.X) / 120.0;
                 transY += -(e.Location.Y - leftButtonPosition.Y) / 120.0;
                 leftButtonPosition = e.Location;
                 Invalidate();
             }
-            if (bRightButtonPushed)//右键控制旋转物体
+            if (bRightButtonPushed)
             {
                 angleX += (e.Location.X - RightButtonPosition.X) / 10.0;
                 angleY += -(e.Location.Y - RightButtonPosition.Y) / 10.0;
@@ -398,10 +369,9 @@ namespace byWednesday
             }
         }
 
-        //鼠标滚轮
         private void glControl1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (e.Delta > 0) //e.delta表示鼠标前后滚
+            if (e.Delta > 0)
             {
                 scaling += 0.1f;
             }
@@ -410,13 +380,13 @@ namespace byWednesday
                 scaling -= 0.1f;
             }
             SetupViewport();
-            Invalidate(); 
+            Invalidate();
         }
 
         private void glControl1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             Point ptClicked = e.Location;
-            //射线选择
+
             Vector3d winxyz;
             winxyz.X = ptClicked.X;
             winxyz.Y = ptClicked.Y;
@@ -436,9 +406,9 @@ namespace byWednesday
             if (pco != null)
             {
                 pco.FindClosestPoint(mFrustum, nearPoint, farPoint, ref close_point);
-                if (!calculate_distance_between_points)
-                    MessageBox.Show("选中点坐标为：\nX坐标：" + close_point.point.X
-                        + "\nY坐标：" + close_point.point.Y + "\nZ坐标：" + close_point.point.Z);
+                if (!calculateTwoPointsDistance)
+                    MessageBox.Show("Selected point coordinate：\nX：" + close_point.point.X
+                        + "\nY：" + close_point.point.Y + "\nZ：" + close_point.point.Z);
                 else
                 {
                     if (num_two_points > 0)
@@ -453,40 +423,32 @@ namespace byWednesday
                     if (num_two_points == 1)
                     {
                         double dis_points = calculateDistance(two_points[0], two_points[1]);
-                        MessageBox.Show("选取的两点坐标为：\n"
+                        MessageBox.Show("2 selected coordinates：\n"
                             + coordinate2string(two_points[0].point) + "\n"
                             + coordinate2string(two_points[1].point) + "\n"
-                            + "这两点之间的距离为：\n"
-                            + Convert.ToString(dis_points));//distance
+                            + "Distance between 2 selected points：\n"
+                            + Convert.ToString(dis_points));
                     }
                 }
-                Render(ptSize, show_octree_outline, point_cloud_color);
+                Render(pointSize, showTreeNodeOutline, pointCloudColor);
                 Invalidate();
                 glControl1.Invalidate();
             }
         }
-        #endregion
 
-        #region 打开点云文件
-        private void 打开OToolStripMenuItem_Click(object sender, EventArgs e)
+        #endregion Mouse Events
+
+        #region Open Las File
+
+        private void openFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //新建一个文件对话框
             OpenFileDialog pOpenFileDialog = new OpenFileDialog();
-
-            //设置对话框标题
-            pOpenFileDialog.Title = "打开las点云文件";
-
-            //设置打开文件类型
-            pOpenFileDialog.Filter = "las文件（*.las）|*.las";
-
-            //监测文件是否存在
+            pOpenFileDialog.Title = "Open LAS file";
+            pOpenFileDialog.Filter = "las *.las |*.las";
             pOpenFileDialog.CheckFileExists = true;
-
-            //文件打开后执行以下程序
             if (pOpenFileDialog.ShowDialog() == DialogResult.OK)
             {
-                //MessageBox.Show(pOpenFileDialog.FileName);
-                pco = ReadLas(pOpenFileDialog.FileName);//传入文件路径，读出点云文件
+                pco = ReadLas(pOpenFileDialog.FileName);
                 Invalidate();
             }
         }
@@ -495,10 +457,10 @@ namespace byWednesday
         {
             var lazReader = new laszip_dll();
             var compressed = true;
-            lazReader.laszip_open_reader(fileName, ref compressed); //FileName要给定
+            lazReader.laszip_open_reader(fileName, ref compressed);
+
             var numberOfPoints = lazReader.header.number_of_point_records;
 
-            // las文件中三维点的范围
             double minx = lazReader.header.min_x;
             double miny = lazReader.header.min_y;
             double minz = lazReader.header.min_z;
@@ -510,22 +472,25 @@ namespace byWednesday
             double centy = (miny + maxy) / 2;
             double centz = (minz + maxz) / 2;
 
-            double scale = Math.Max(Math.Max(maxx - minx, maxy - miny), (maxz - minz));//0715上课说要再除以2
+            double scale = Math.Max(Math.Max(maxx - minx, maxy - miny), (maxz - minz));
 
             int classification = 0;
-            var coordArray = new double[3];//自己考虑是否需要double float
-            ColorPoint color_point = new ColorPoint();//vector3d是double vector is float
-            List<ColorPoint> points = new List<ColorPoint>((int)numberOfPoints);
+            var coordArray = new double[3];
+            ColorPoint colorPoint = new ColorPoint();
+            Vector3d[] points = new Vector3d[numberOfPoints];
+            Vector3[] cols = new Vector3[numberOfPoints];
+            Matrix4[] mats = new Matrix4[]
+            {
+                Matrix4.Identity
+            };
 
-            //循环读取每个点
+            //List<ColorPoint> points = new List<ColorPoint>((int)numberOfPoints);
+            //double[] points = new double[numberOfPoints * 3];
             for (int pointIndex = 0; pointIndex < numberOfPoints; pointIndex++)
             {
-                // 读点
                 lazReader.laszip_read_point();
-                // 得到坐标值
                 lazReader.laszip_get_coordinates(coordArray);
 
-                //彩虹色
                 Vector3d cr_red = new Vector3d(1, 0, 0);
                 Vector3d cr_orange = new Vector3d(1, 0.647, 0);
                 Vector3d cr_yellow = new Vector3d(1, 1, 0);
@@ -534,10 +499,15 @@ namespace byWednesday
                 Vector3d cr_bule = new Vector3d(0, 0, 1);
                 Vector3d cr_purple = new Vector3d(0.545, 0, 1);
 
-                //每个点根据坐标着色
-                if (point_cloud_color == "rainbow")
+                if (pointCloudColor == "RGB")
                 {
-                    //6等分z轴,用于插值颜色
+                    colorPoint.color.X = lazReader.point.rgb[0] / 255.0;
+                    colorPoint.color.Y = lazReader.point.rgb[1] / 255.0;
+                    colorPoint.color.Z = lazReader.point.rgb[2] / 255.0;
+                }
+
+                if (pointCloudColor == "rainbow")
+                {
                     double z_1_6 = 1 * (maxz - minz) / 6 + minz;
                     double z_2_6 = 2 * (maxz - minz) / 6 + minz;
                     double z_3_6 = 3 * (maxz - minz) / 6 + minz;
@@ -546,88 +516,84 @@ namespace byWednesday
 
                     if (coordArray[2] <= z_1_6)
                     {
-                        color_point.color.X = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
-                        color_point.color.Y = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
-                        color_point.color.Z = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
                     }
                     else if (coordArray[2] <= z_2_6)
                     {
-                        color_point.color.X = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
-                        color_point.color.Y = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
-                        color_point.color.Z = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
+                        colorPoint.color.X = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
                     }
                     else if (coordArray[2] <= z_3_6)
                     {
-                        color_point.color.X = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.X - cr_yellow.X) + cr_yellow.X;
-                        color_point.color.Y = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Y - cr_yellow.Y) + cr_yellow.Y;
-                        color_point.color.Z = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Z - cr_yellow.Z) + cr_yellow.Z;
+                        colorPoint.color.X = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.X - cr_yellow.X) + cr_yellow.X;
+                        colorPoint.color.Y = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Y - cr_yellow.Y) + cr_yellow.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Z - cr_yellow.Z) + cr_yellow.Z;
                     }
                     else if (coordArray[2] <= z_4_6)
                     {
-                        color_point.color.X = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.X - cr_green.X) + cr_green.X;
-                        color_point.color.Y = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
-                        color_point.color.Z = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
+                        colorPoint.color.X = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.X - cr_green.X) + cr_green.X;
+                        colorPoint.color.Y = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
                     }
                     else if (coordArray[2] <= z_5_6)
                     {
-                        color_point.color.X = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
-                        color_point.color.Y = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
-                        color_point.color.Z = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
+                        colorPoint.color.X = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
+                        colorPoint.color.Y = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
                     }
                     else
                     {
-                        color_point.color.X = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.X - cr_bule.X) + cr_bule.X;
-                        color_point.color.Y = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Y - cr_bule.Y) + cr_bule.Y;
-                        color_point.color.Z = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Z - cr_bule.Z) + cr_bule.Z;
+                        colorPoint.color.X = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.X - cr_bule.X) + cr_bule.X;
+                        colorPoint.color.Y = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Y - cr_bule.Y) + cr_bule.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Z - cr_bule.Z) + cr_bule.Z;
                     }
                 }
-
-                else if (point_cloud_color == "warm")
+                else if (pointCloudColor == "warm")
                 {
-                    //2等分z轴,用于插值颜色
                     double z_1_2 = 1 * (maxz - minz) / 2 + minz;
 
                     if (coordArray[2] <= z_1_2)
                     {
-                        color_point.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
-                        color_point.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
-                        color_point.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
                     }
                     else
                     {
-                        color_point.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
-                        color_point.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
-                        color_point.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
+                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
                     }
                 }
-                else if (point_cloud_color == "cold")
+                else if (pointCloudColor == "cold")
                 {
-                    //2等分z轴,用于插值颜色
                     double z_1_2 = 1 * (maxz - minz) / 2 + minz;
 
                     if (coordArray[2] <= z_1_2)
                     {
-                        color_point.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.X - cr_green.X) + cr_green.X;
-                        color_point.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
-                        color_point.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.X - cr_green.X) + cr_green.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
                     }
                     else
                     {
-                        color_point.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
-                        color_point.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
-                        color_point.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
+                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
                     }
                 }
 
-                color_point.point.X = (coordArray[0] - centx) / scale; //归一化
-                color_point.point.Y = (coordArray[1] - centy) / scale;
-                color_point.point.Z = (coordArray[2] - centz) / scale;
-
-                //points.Add(point);
-                points.Add(color_point);
+                colorPoint.point.X = (coordArray[0] - centx) / scale;
+                colorPoint.point.Y = (coordArray[1] - centy) / scale;
+                colorPoint.point.Z = (coordArray[2] - centz) / scale;
                 classification = lazReader.point.classification;
+
+                points[pointIndex] = colorPoint.point;
+                cols[pointIndex] = (Vector3)colorPoint.color;
             }
-            // 关闭
             lazReader.laszip_close_reader();
 
             Vector3d minv;
@@ -640,15 +606,22 @@ namespace byWednesday
             maxv.Y = (maxy - centy) / scale;
             maxv.Z = (maxz - centz) / scale;
 
-            PointCloudOctree p = new PointCloudOctree(points, minv, maxv);
+            PointCloudOctree p = new PointCloudOctree(ref points, minv, maxv);
+
+            shader = new Shader(
+                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.vert", 
+                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.frag"
+            );
+            shader.Use();
+            renderer = new Renderer(ref points, ref cols, ref mats, shader);
+            renderer.Init();
+
             return p;
         }
-        #endregion
 
-        #region 扩展功能
+        #endregion Open Las File
 
-        #region 鼠标选点
-        int UnProject(Vector3d win, ref Vector3d obj)
+        private int UnProject(Vector3d win, ref Vector3d obj)
         {
             Matrix4d modelMatrix;
             GL.GetDouble(GetPName.ModelviewMatrix, out modelMatrix);
@@ -659,13 +632,13 @@ namespace byWednesday
             return UnProject(win, modelMatrix, projMatrix, viewport, ref obj);
         }
 
-        int UnProject(Vector3d win, Matrix4d modelMatrix, Matrix4d projMatrix, int[] viewport, ref Vector3d obj)
+        private int UnProject(Vector3d win, Matrix4d modelMatrix, Matrix4d projMatrix, int[] viewport, ref Vector3d obj)
         {
             return like_gluUnProject(win.X, win.Y, win.Z, modelMatrix, projMatrix,
             viewport, ref obj.X, ref obj.Y, ref obj.Z);
         }
 
-        int like_gluUnProject(double winx, double winy, double winz,
+        private int like_gluUnProject(double winx, double winy, double winz,
             Matrix4d modelMatrix, Matrix4d projMatrix, int[] viewport,
             ref double objx, ref double objy, ref double objz)
         {
@@ -698,10 +671,8 @@ namespace byWednesday
             objz = _out.Z;
             return (1);
         }
-        #endregion
 
-        #region 截图
-        private void 截图ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void screenShotToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int[] vdata = new int[4];
             GL.GetInteger(GetPName.Viewport, vdata);
@@ -715,8 +686,9 @@ namespace byWednesday
             FlipHeight(imgBuffer, w, h);
             Bitmap bmp = BytesToImg(imgBuffer, w, h);
             bmp.Save("D:\\opentk.bmp");
-            MessageBox.Show("截图成功！");
+            MessageBox.Show("Screen shot taken！");
         }
+
         private void FlipHeight(byte[] data, int w, int h)
         {
             int wstep = w * 3;
@@ -728,6 +700,7 @@ namespace byWednesday
                 Array.Copy(temp, 0, data, wstep * (h - i - 1), wstep);
             }
         }
+
         private Bitmap BytesToImg(byte[] bytes, int w, int h)
         {
             Bitmap bmp = new Bitmap(w, h);
@@ -740,56 +713,58 @@ namespace byWednesday
             bmp.UnlockBits(bd);
             return bmp;
         }
-        #endregion
 
-        #region 选择色系
+        #region Select Color
+
+        private void radioButton6_CheckedChanged(object sender, EventArgs e)
+        {
+            pointCloudColor = "RGB";
+            Invalidate();
+        }
+
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
-            point_cloud_color = "rainbow";
+            pointCloudColor = "rainbow";
             Invalidate();
-
         }
 
         private void radioButton2_CheckedChanged(object sender, EventArgs e)
         {
-            point_cloud_color = "warm";
+            pointCloudColor = "warm";
             Invalidate();
-            //Render(ptSize, show_octree_outline, point_cloud_color);
         }
 
         private void radioButton3_CheckedChanged(object sender, EventArgs e)
         {
-            point_cloud_color = "cold";
+            pointCloudColor = "cold";
             Invalidate();
-            //Render(ptSize, show_octree_outline, point_cloud_color);
         }
-        #endregion
 
-        #region 选择绘制类型
-        private void 绘制三角形ToolStripMenuItem_Click(object sender, EventArgs e)
+        #endregion Select Color
+
+        #region Draw Primitive Shapes
+
+        private void drawSphereToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            paint_object = "triangle";
+            primtiveObject = "triangle";
         }
 
-        private void 绘制球体ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void drawTriangleToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            paint_object = "sphere";
+            primtiveObject = "sphere";
         }
-        #endregion
 
-        #region 显示包围核
+        #endregion Draw Primitive Shapes
+
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-            if (show_octree_outline == false)
-                show_octree_outline = true;
+            if (showTreeNodeOutline == false)
+                showTreeNodeOutline = true;
             else
-                show_octree_outline = false;
-
+                showTreeNodeOutline = false;
             Invalidate();
         }
-        #endregion
 
-        #region 选择点大小
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
             if (textBox1.Text == "")
@@ -804,26 +779,25 @@ namespace byWednesday
                 a = 1;
             }
 
-            ptSize = a;
+            pointSize = a;
 
             Invalidate();
         }
-        #endregion
 
-        #region 求两点间距离
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
-            if (calculate_distance_between_points)
-                calculate_distance_between_points = false;
-            else
-                calculate_distance_between_points = true;
+            calculateTwoPointsDistance = !calculateTwoPointsDistance;
+            //if (calculateTwoPointsDistance)
+            //    calculateTwoPointsDistance = false;
+            //else
+            //    calculateTwoPointsDistance = true;
         }
 
-        private string coordinate2string(Vector3d v)//将点的坐标转换为字符串以输出
+        private string coordinate2string(Vector3d v)
         {
-            string string_of_coordinate = "(" + Convert.ToString(v.X) + "," + Convert.ToString(v.Y) + ","
+            string coordinates = "(" + Convert.ToString(v.X) + "," + Convert.ToString(v.Y) + ","
                 + Convert.ToString(v.Z) + ")";
-            return string_of_coordinate;
+            return coordinates;
         }
 
         private double calculateDistance(Point3DExt point1, Point3DExt point2)
@@ -838,10 +812,7 @@ namespace byWednesday
             return d;
         }
 
-        #endregion
-
-        #region 使用说明
-        private void 使用说明ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void instructionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show("登陆后，从打开菜单中选择绘制的图像\n" +
                 "鼠标左键可以控制物体平移\n" +
@@ -850,9 +821,7 @@ namespace byWednesday
                 "双击鼠标可以选点" +
                 "复选框可以选择绘制包围核（默认不绘制），也可以选择计算两点间距离（默认不计算）");
         }
-        #endregion
 
-        #region 打开新文件与退出
         private void button4_Click(object sender, EventArgs e)
         {
             this.Hide();
@@ -864,43 +833,38 @@ namespace byWednesday
         {
             Application.Exit();
         }
-        #endregion
 
-        #region 投影方式
         public void like_gluPerspective(double fovy, double aspect, double near, double far)
         {
             const double DEG2RAD = 3.14159265 / 180.0;
             double tangent = Math.Tan(fovy / 2 * DEG2RAD);
             double height = near * tangent;
             double width = height * aspect;
-            GL.Frustum(-width, width, -height, height, near, far);
+            GL.Frustum(-width, width, -height, height, -100, 100);
         }
+
         private void radioButton4_CheckedChanged_1(object sender, EventArgs e)
         {
-            perspective_projection = false;
+            perspectiveProjection = false;
             Invalidate();
         }
 
         private void radioButton5_CheckedChanged_1(object sender, EventArgs e)
         {
-            perspective_projection = true;
+            perspectiveProjection = true;
             Invalidate();
         }
-        #endregion
-
-
-        #endregion
 
         #region useless
+
         private void radioButton5_CheckedChanged(object sender, EventArgs e)
         {
-            
         }
 
         private void radioButton4_CheckedChanged(object sender, EventArgs e)
         {
-            
         }
+
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
             //richTextBox1.Text = "ok";
@@ -913,29 +877,39 @@ namespace byWednesday
 
         private void splitContainer2_Panel2_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-
         }
 
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
-            ptSize += 1;
+            pointSize += 1;
         }
 
         private void checkBox3_CheckedChanged(object sender, EventArgs e)
         {
-            
         }
 
         private void checkBox3_CheckedChanged_1(object sender, EventArgs e)
         {
-
         }
+
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = false;
         }
-        #endregion
 
+        #endregion useless
 
+        private void splitContainer1_ClientSizeChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void splitContainer1_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+            if (bOpenGLInitial)
+            {
+                SetupViewport();
+                Invalidate();
+            }
+        }
     }
 }
