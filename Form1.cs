@@ -150,7 +150,7 @@ namespace PointCloudViewer
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.ClearDepth(1.0f);
             GL.Enable(EnableCap.DepthTest);
-            SetupViewport();
+            //SetupViewport();
             bOpenGLInitial = true;
         }
 
@@ -183,30 +183,19 @@ namespace PointCloudViewer
 
         private void Render(int point_size, bool ShowOctreeOutline, string PointCloudColor)
         {
-
-
-            //GL.MatrixMode(MatrixMode.Projection);
-            //GL.LoadIdentity();
-
-            //if (perspectiveProjection)
-            //    GL.Translate(transX / 5, transY / 5, -1);
-            //else
-            //    GL.Translate(transX / 5, transY / 5, 0);
-            //GL.Rotate(angleY, 1, 0, 0);
-            //GL.Rotate(angleX, 0, 1, 0);
-            //GL.Scale(scaling, scaling, scaling);
-
-            //CalculateFrustum();
             if (primtiveObject == "las")
             {
-                if (pco != null)
+                if (shader != null)
                 {
                     glControl1.MakeCurrent();
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                     GL.Viewport(0, 0, glControl1.ClientSize.Width, glControl1.ClientSize.Height);
                     shader.Use();
-                    renderer.Draw(shader);
+                    renderer.Draw(shader); 
                 }
+                //if (pco != null)
+                //{
+                //}
             }
             else if (primtiveObject == "sphere")
             {
@@ -217,6 +206,7 @@ namespace PointCloudViewer
                 DrawTriangle();
             }
 
+            GL.Flush();
             glControl1.SwapBuffers();
         }
 
@@ -448,12 +438,13 @@ namespace PointCloudViewer
             pOpenFileDialog.CheckFileExists = true;
             if (pOpenFileDialog.ShowDialog() == DialogResult.OK)
             {
-                pco = ReadLas(pOpenFileDialog.FileName);
+                //pco = ReadLas(pOpenFileDialog.FileName);
+                ReadLas(pOpenFileDialog.FileName);
                 Invalidate();
             }
         }
 
-        private PointCloudOctree ReadLas(string fileName)
+        private void ReadLas(string fileName)
         {
             var lazReader = new laszip_dll();
             var compressed = true;
@@ -479,10 +470,7 @@ namespace PointCloudViewer
             ColorPoint colorPoint = new ColorPoint();
             Vector3d[] points = new Vector3d[numberOfPoints];
             Vector3[] cols = new Vector3[numberOfPoints];
-            Matrix4[] mats = new Matrix4[]
-            {
-                Matrix4.Identity
-            };
+            Matrix4 mats = Matrix4.Identity;
 
             //List<ColorPoint> points = new List<ColorPoint>((int)numberOfPoints);
             //double[] points = new double[numberOfPoints * 3];
@@ -606,17 +594,18 @@ namespace PointCloudViewer
             maxv.Y = (maxy - centy) / scale;
             maxv.Z = (maxz - centz) / scale;
 
-            PointCloudOctree p = new PointCloudOctree(ref points, minv, maxv);
+            //PointCloudOctree p = new PointCloudOctree(ref points, minv, maxv);
 
             shader = new Shader(
                 Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.vert", 
                 Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.frag"
             );
+
             shader.Use();
             renderer = new Renderer(ref points, ref cols, ref mats, shader);
             renderer.Init();
 
-            return p;
+            //return p;
         }
 
         #endregion Open Las File

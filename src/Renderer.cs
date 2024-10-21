@@ -15,16 +15,19 @@ namespace PointCloudViewer.src
         private int vboPosition;
         private int vboColor;
         private int vboModelView;
-        private Vector3d[] vects;
-        private Vector3[] cols;
         private Shader shader;
-        private Matrix4[] modelViewMats;
-        public Renderer(ref Vector3d[] vects, ref Vector3[] cols, ref Matrix4[] modelViewMats, Shader shader)
+        private Vector3d[] vects { get; set; }
+        private Vector3[] cols { get; set; }
+        private Matrix4 modelViewMats { get; set; }
+        private Camera camera { get; set; }
+
+        public Renderer(ref Vector3d[] vects, ref Vector3[] cols, ref Matrix4 modelViewMats, Shader shader)
         {
             this.shader = shader;
             this.vects = vects;
             this.cols = cols;
             this.modelViewMats = modelViewMats;
+            this.camera = new Camera(new Vector3(0.0f, 0.0f, -1.0f));
         }
 
         public void Init()
@@ -41,7 +44,10 @@ namespace PointCloudViewer.src
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(cols.Length * Vector3.SizeInBytes), cols, BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(shader.attributeCol, 3, VertexAttribPointerType.Float, true, 0, 0);
 
-            GL.UniformMatrix4(shader.uniformModelView, false, ref modelViewMats[0]);
+            camera.SetupCamera();
+            Matrix4 modelViewMats = camera.modelViewMatrix;
+            
+            GL.UniformMatrix4(shader.uniformModelView, false, ref modelViewMats);
         }
 
         public void Draw(Shader shader)

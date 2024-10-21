@@ -9,3 +9,14 @@ D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.csproj.CoreC
 D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointClo.34628A32.Up2Date
 D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.exe
 D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.pdb
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\bin\Debug\PointCloudViewer.exe.config
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\bin\Debug\PointCloudViewer.exe
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\bin\Debug\PointCloudViewer.pdb
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointCloudViewer.csproj.AssemblyReference.cache
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointCloudViewer.Form1.resources
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointCloudViewer.Properties.Resources.resources
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointCloudViewer.csproj.GenerateResource.cache
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointCloudViewer.csproj.CoreCompileInputs.cache
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointClo.34628A32.Up2Date
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointCloudViewer.exe
+D:\Working\Projects\Assignment\Point-Cloud-Viewer\obj\Debug\PointCloudViewer.pdb
