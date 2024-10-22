@@ -47,6 +47,7 @@ namespace PointCloudViewer
         private bool hasLas = false;
         private Shader shader;
         private Renderer renderer;
+        private Camera camera;
         #endregion Global Variable
 
         #region Window Functions
@@ -60,6 +61,7 @@ namespace PointCloudViewer
         private void Form1_Load(object sender, EventArgs e)
         {
             InitialGL();
+            camera = new Camera(new Vector3(0.0f, 0.0f, -1.0f), glControl1.Width / glControl1.Height);
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -147,7 +149,7 @@ namespace PointCloudViewer
         private void InitialGL()
         {
             //GL.ShadeModel(ShadingModel.Smooth);
-            GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            GL.ClearColor(0.0f, 0.5f, 0.5f, 0.5f);
             GL.ClearDepth(1.0f);
             GL.Enable(EnableCap.DepthTest);
             //SetupViewport();
@@ -193,9 +195,6 @@ namespace PointCloudViewer
                     shader.Use();
                     renderer.Draw(shader); 
                 }
-                //if (pco != null)
-                //{
-                //}
             }
             else if (primtiveObject == "sphere")
             {
@@ -345,8 +344,15 @@ namespace PointCloudViewer
         {
             if (bLeftButtonPushed)
             {
-                transX += (e.Location.X - leftButtonPosition.X) / 120.0;
-                transY += -(e.Location.Y - leftButtonPosition.Y) / 120.0;
+                float aspect = (float)glControl1.Width / (float)glControl1.Height;
+                float deltaX = (e.Location.X - leftButtonPosition.X) / (float)glControl1.Width;
+                float deltaY = (e.Location.Y - leftButtonPosition.Y) / (float)glControl1.Height;
+
+                transX += deltaX * scaling;
+                transY += deltaY * scaling / aspect;
+
+                camera.Position = new Vector3((float)transX, (float)transY, -1.0f);
+
                 leftButtonPosition = e.Location;
                 Invalidate();
             }
@@ -354,6 +360,10 @@ namespace PointCloudViewer
             {
                 angleX += (e.Location.X - RightButtonPosition.X) / 10.0;
                 angleY += -(e.Location.Y - RightButtonPosition.Y) / 10.0;
+
+                camera.Yaw = (float)angleX;
+                camera.Pitch = (float)angleY;
+
                 RightButtonPosition = e.Location;
                 Invalidate();
             }
@@ -361,15 +371,18 @@ namespace PointCloudViewer
 
         private void glControl1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (e.Delta > 0)
+            if (camera.Fov >= 45.0f)
             {
-                scaling += 0.1f;
+                camera.Fov = 45.0f;
             }
-            else if (e.Delta < 0)
+            else if (camera.Fov <= 1.0f)
             {
-                scaling -= 0.1f;
+                camera.Fov = 1.0f;
             }
-            SetupViewport();
+            else
+            {
+                camera.Fov -= e.Delta;
+            }
             Invalidate();
         }
 
@@ -470,7 +483,6 @@ namespace PointCloudViewer
             ColorPoint colorPoint = new ColorPoint();
             Vector3d[] points = new Vector3d[numberOfPoints];
             Vector3[] cols = new Vector3[numberOfPoints];
-            Matrix4 mats = Matrix4.Identity;
 
             //List<ColorPoint> points = new List<ColorPoint>((int)numberOfPoints);
             //double[] points = new double[numberOfPoints * 3];
@@ -602,7 +614,7 @@ namespace PointCloudViewer
             );
 
             shader.Use();
-            renderer = new Renderer(ref points, ref cols, ref mats, shader);
+            renderer = new Renderer(ref points, ref cols, shader, camera);
             renderer.Init();
 
             //return p;

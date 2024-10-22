@@ -3,10 +3,10 @@ in vec3 aPosition;
 in vec3 aColor;
 out vec4 color;
 uniform mat4 modelView;
+uniform mat4 projection;
 
 void main()
 {
-    gl_Position = modelView * vec4(aPosition, 1.0);
-    // gl_Position = vec4(aPosition, 1.0);
+    gl_Position = vec4(aPosition, 1.0) * modelView * projection;
     color = vec4(aColor, 1.0);
 }

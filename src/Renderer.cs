@@ -21,13 +21,13 @@ namespace PointCloudViewer.src
         private Matrix4 modelViewMats { get; set; }
         private Camera camera { get; set; }
 
-        public Renderer(ref Vector3d[] vects, ref Vector3[] cols, ref Matrix4 modelViewMats, Shader shader)
+        public Renderer(ref Vector3d[] vects, ref Vector3[] cols, Shader shader, Camera camera)
         {
             this.shader = shader;
             this.vects = vects;
             this.cols = cols;
-            this.modelViewMats = modelViewMats;
-            this.camera = new Camera(new Vector3(0.0f, 0.0f, -1.0f));
+            this.camera = camera;
+            //this.modelViewMats = modelViewMats;
         }
 
         public void Init()
@@ -36,26 +36,25 @@ namespace PointCloudViewer.src
             GL.GenBuffers(1, out vboColor);
             GL.GenBuffers(1, out vboModelView);
 
+            var vertexLocation = shader.GetAttribLocation("aPosition");
             GL.BindBuffer(BufferTarget.ArrayBuffer, vboPosition);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(vects.Length * Vector3d.SizeInBytes), vects, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(shader.attributePos, 3, VertexAttribPointerType.Double, false, 0, 0);
+            GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Double, false, 0, 0);
 
+            var texLocation = shader.GetAttribLocation("aColor");
             GL.BindBuffer(BufferTarget.ArrayBuffer, vboColor);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(cols.Length * Vector3.SizeInBytes), cols, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(shader.attributeCol, 3, VertexAttribPointerType.Float, true, 0, 0);
-
-            camera.SetupCamera();
-            Matrix4 modelViewMats = camera.modelViewMatrix;
-            
-            GL.UniformMatrix4(shader.uniformModelView, false, ref modelViewMats);
+            GL.VertexAttribPointer(texLocation, 3, VertexAttribPointerType.Float, true, 0, 0);
         }
 
         public void Draw(Shader shader)
         {
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.Enable(EnableCap.DepthTest);
-            GL.EnableVertexAttribArray(shader.attributePos);
-            GL.EnableVertexAttribArray(shader.attributeCol);
+            GL.EnableVertexAttribArray(shader.GetAttribLocation("aPosition"));
+            GL.EnableVertexAttribArray(shader.GetAttribLocation("aColor"));
+
+            shader.SetMatrix4("projection", camera.GetProjectionMatrix());
+            shader.SetMatrix4("modelView", camera.GetViewMatrix());
+
             GL.DrawArrays(PrimitiveType.Points, 0, vects.Length);
         }
 
