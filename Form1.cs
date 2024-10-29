@@ -8,12 +8,13 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace PointCloudViewer
 {
-    internal struct Point3DExt
+    public struct Point3DExt
     {
         public Vector3d point;
         public double flag;
@@ -30,6 +31,11 @@ namespace PointCloudViewer
         private double angleX = 0;
         private double angleY = 0;
         private float scaling = 1.0f;
+        private double offsetYaw = 0;
+        private double offsetPitch = 0;
+        private double offsetTransX = 0;
+        private double offsetTransY = 0;
+        private double lastSavedTransX = 0, lastSavedTransY = 0;
         private string primtiveObject = "las";
         private bool showTreeNodeOutline = false;
         private double[,] mFrustum = new double[6, 4];
@@ -42,12 +48,16 @@ namespace PointCloudViewer
         private bool calculateTwoPointsDistance = false;
         private List<Point3DExt> two_points = new List<Point3DExt>(2);
         private int num_two_points = -1;
+        private Vector3d orbitCenter;
         private float fov = (float)Math.PI / 3.0f;
         private bool perspectiveProjection = false;
         private bool hasLas = false;
         private Shader shader;
         private Renderer renderer;
         private Camera camera;
+        private Frustum frustum;
+        private Transform transform;
+
         #endregion Global Variable
 
         #region Window Functions
@@ -61,7 +71,6 @@ namespace PointCloudViewer
         private void Form1_Load(object sender, EventArgs e)
         {
             InitialGL();
-            camera = new Camera(new Vector3(0.0f, 0.0f, -1.0f), glControl1.Width / glControl1.Height);
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -152,7 +161,13 @@ namespace PointCloudViewer
             GL.ClearColor(0.0f, 0.5f, 0.5f, 0.5f);
             GL.ClearDepth(1.0f);
             GL.Enable(EnableCap.DepthTest);
-            //SetupViewport();
+            GL.Enable(EnableCap.ProgramPointSize);
+
+            camera = new Camera(new Vector3(0.0f, 0.0f, -1.0f), glControl1.AspectRatio);
+
+            transform = new Transform();
+            transform.SetLocalPosition(new Vector3(0.0f, 0.0f, 0.0f));
+            
             bOpenGLInitial = true;
         }
 
@@ -183,17 +198,28 @@ namespace PointCloudViewer
             }
         }
 
-        private void Render(int point_size, bool ShowOctreeOutline, string PointCloudColor)
+        private void Render(int pointSize, bool ShowOctreeOutline, string PointCloudColor)
         {
             if (primtiveObject == "las")
             {
-                if (shader != null)
+                if (shader != null && pco != null)
                 {
                     glControl1.MakeCurrent();
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                     GL.Viewport(0, 0, glControl1.ClientSize.Width, glControl1.ClientSize.Height);
+                    GL.PointSize(pointSize);
+                    
                     shader.Use();
-                    renderer.Draw(shader); 
+                    frustum = Frustum.CreateFrustumFromCamera(ref camera, glControl1.AspectRatio, MathHelper.DegreesToRadians(camera.Zoom), camera.zNear, camera.zFar);
+                    pco.IsNodeInsideFrustum(ref frustum, ref transform);
+
+                    shader.SetMatrix4("model", transform.GetModelMatrix());
+
+                    renderer.Draw(shader, glControl1);
+                    if (orbitCenter != null)
+                    {
+                        renderer.DrawPoint(ref orbitCenter);
+                    }
                 }
             }
             else if (primtiveObject == "sphere")
@@ -332,12 +358,17 @@ namespace PointCloudViewer
                 bRightButtonPushed = true;
                 RightButtonPosition = e.Location;
             }
+            camera.UpdateVectors();
         }
 
         private void glControl1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             bLeftButtonPushed = false;
             bRightButtonPushed = false;
+            offsetYaw = 0;
+            offsetPitch = 0;
+            offsetTransX = 0;
+            offsetTransY = 0;
         }
 
         private void glControl1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -347,11 +378,17 @@ namespace PointCloudViewer
                 float aspect = (float)glControl1.Width / (float)glControl1.Height;
                 float deltaX = (e.Location.X - leftButtonPosition.X) / (float)glControl1.Width;
                 float deltaY = (e.Location.Y - leftButtonPosition.Y) / (float)glControl1.Height;
-
+                
                 transX += deltaX * scaling;
                 transY += deltaY * scaling / aspect;
 
-                camera.Position = new Vector3((float)transX, (float)transY, -1.0f);
+                //offsetTransX = transX - lastSavedTransX;
+                //offsetTransY = transY - lastSavedTransY;
+
+                //camera.Position.X = (float)transX;
+                //camera.Position.Y = (float)transY;
+
+                transform.SetLocalPosition(new Vector3((float)transX, (float)-transY, 0));
 
                 leftButtonPosition = e.Location;
                 Invalidate();
@@ -361,28 +398,21 @@ namespace PointCloudViewer
                 angleX += (e.Location.X - RightButtonPosition.X) / 10.0;
                 angleY += -(e.Location.Y - RightButtonPosition.Y) / 10.0;
 
-                camera.Yaw = (float)angleX;
-                camera.Pitch = (float)angleY;
+                //camera.Yaw = (float)angleX;
+                //camera.Pitch = (float)angleY;
+                transform.SetLocalRotation(new Vector3((float)angleY, (float)angleX, 0));
 
                 RightButtonPosition = e.Location;
                 Invalidate();
             }
+            //camera.UpdateVectors();
+            transform.ComputeModelMatrix();
         }
 
         private void glControl1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (camera.Fov >= 45.0f)
-            {
-                camera.Fov = 45.0f;
-            }
-            else if (camera.Fov <= 1.0f)
-            {
-                camera.Fov = 1.0f;
-            }
-            else
-            {
-                camera.Fov -= e.Delta;
-            }
+            camera.Zoom = MathHelper.Clamp(camera.Zoom - (e.Delta / 50), 10, 90);
+            camera.UpdateVectors();
             Invalidate();
         }
 
@@ -393,15 +423,16 @@ namespace PointCloudViewer
             Vector3d winxyz;
             winxyz.X = ptClicked.X;
             winxyz.Y = ptClicked.Y;
+
             winxyz.Z = 0.0f;
             Vector3d nearPoint = new Vector3d(0, 0, 0);
             UnProject(winxyz, ref nearPoint);
-            winxyz.Z = 1.0f;
+            winxyz.Z = 100.0f;
             Vector3d farPoint = new Vector3d(0, 0, 0);
             UnProject(winxyz, ref farPoint);
 
-            Vector3d line;
-            line = farPoint - nearPoint;
+            //Vector3d line;
+            //line = farPoint - nearPoint;
 
             Point3DExt close_point = new Point3DExt();
             close_point.flag = 10000;
@@ -409,6 +440,7 @@ namespace PointCloudViewer
             if (pco != null)
             {
                 pco.FindClosestPoint(mFrustum, nearPoint, farPoint, ref close_point);
+                orbitCenter = close_point.point;
                 if (!calculateTwoPointsDistance)
                     MessageBox.Show("Selected point coordinate：\nX：" + close_point.point.X
                         + "\nY：" + close_point.point.Y + "\nZ：" + close_point.point.Z);
@@ -451,13 +483,12 @@ namespace PointCloudViewer
             pOpenFileDialog.CheckFileExists = true;
             if (pOpenFileDialog.ShowDialog() == DialogResult.OK)
             {
-                //pco = ReadLas(pOpenFileDialog.FileName);
-                ReadLas(pOpenFileDialog.FileName);
+                pco = ReadLas(pOpenFileDialog.FileName);
                 Invalidate();
             }
         }
 
-        private void ReadLas(string fileName)
+        private PointCloudOctree ReadLas(string fileName)
         {
             var lazReader = new laszip_dll();
             var compressed = true;
@@ -484,8 +515,167 @@ namespace PointCloudViewer
             Vector3d[] points = new Vector3d[numberOfPoints];
             Vector3[] cols = new Vector3[numberOfPoints];
 
-            //List<ColorPoint> points = new List<ColorPoint>((int)numberOfPoints);
-            //double[] points = new double[numberOfPoints * 3];
+            for (int pointIndex = 0; pointIndex < numberOfPoints; pointIndex++)
+            {
+                lazReader.laszip_read_point();
+                lazReader.laszip_get_coordinates(coordArray);
+
+                Vector3d cr_red = new Vector3d(1, 0, 0);
+                Vector3d cr_orange = new Vector3d(1, 0.647, 0);
+                Vector3d cr_yellow = new Vector3d(1, 1, 0);
+                Vector3d cr_green = new Vector3d(0, 1, 0);
+                Vector3d cr_cyan = new Vector3d(0, 0.498, 1);
+                Vector3d cr_bule = new Vector3d(0, 0, 1);
+                Vector3d cr_purple = new Vector3d(0.545, 0, 1);
+
+                if (pointCloudColor == "RGB")
+                {
+                    colorPoint.color.X = lazReader.point.rgb[0] / 255.0;
+                    colorPoint.color.Y = lazReader.point.rgb[1] / 255.0;
+                    colorPoint.color.Z = lazReader.point.rgb[2] / 255.0;
+                }
+
+                if (pointCloudColor == "rainbow")
+                {
+                    double z_1_6 = 1 * (maxz - minz) / 6 + minz;
+                    double z_2_6 = 2 * (maxz - minz) / 6 + minz;
+                    double z_3_6 = 3 * (maxz - minz) / 6 + minz;
+                    double z_4_6 = 4 * (maxz - minz) / 6 + minz;
+                    double z_5_6 = 5 * (maxz - minz) / 6 + minz;
+
+                    if (coordArray[2] <= z_1_6)
+                    {
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
+                    }
+                    else if (coordArray[2] <= z_2_6)
+                    {
+                        colorPoint.color.X = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
+                    }
+                    else if (coordArray[2] <= z_3_6)
+                    {
+                        colorPoint.color.X = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.X - cr_yellow.X) + cr_yellow.X;
+                        colorPoint.color.Y = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Y - cr_yellow.Y) + cr_yellow.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Z - cr_yellow.Z) + cr_yellow.Z;
+                    }
+                    else if (coordArray[2] <= z_4_6)
+                    {
+                        colorPoint.color.X = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.X - cr_green.X) + cr_green.X;
+                        colorPoint.color.Y = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
+                    }
+                    else if (coordArray[2] <= z_5_6)
+                    {
+                        colorPoint.color.X = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
+                        colorPoint.color.Y = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
+                    }
+                    else
+                    {
+                        colorPoint.color.X = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.X - cr_bule.X) + cr_bule.X;
+                        colorPoint.color.Y = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Y - cr_bule.Y) + cr_bule.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Z - cr_bule.Z) + cr_bule.Z;
+                    }
+                }
+                else if (pointCloudColor == "warm")
+                {
+                    double z_1_2 = 1 * (maxz - minz) / 2 + minz;
+
+                    if (coordArray[2] <= z_1_2)
+                    {
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
+                    }
+                    else
+                    {
+                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
+                    }
+                }
+                else if (pointCloudColor == "cold")
+                {
+                    double z_1_2 = 1 * (maxz - minz) / 2 + minz;
+
+                    if (coordArray[2] <= z_1_2)
+                    {
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.X - cr_green.X) + cr_green.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
+                    }
+                    else
+                    {
+                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
+                    }
+                }
+
+                colorPoint.point.X = (coordArray[0] - centx) / scale;
+                colorPoint.point.Y = (coordArray[1] - centy) / scale;
+                colorPoint.point.Z = (coordArray[2] - centz) / scale;
+                classification = lazReader.point.classification;
+
+                points[pointIndex] = colorPoint.point;
+                cols[pointIndex] = (Vector3)colorPoint.color;
+            }
+            lazReader.laszip_close_reader();
+
+            Vector3d minv;
+            minv.X = (minx - centx) / scale;
+            minv.Y = (miny - centy) / scale;
+            minv.Z = (minz - centz) / scale;
+
+            Vector3d maxv;
+            maxv.X = (maxx - centx) / scale;
+            maxv.Y = (maxy - centy) / scale;
+            maxv.Z = (maxz - centz) / scale;
+
+            shader = new Shader(
+                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.vert",
+                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.frag"
+            );
+
+            shader.Use();
+            renderer = new Renderer(ref points, ref cols, shader, camera);
+            renderer.Init();
+
+            PointCloudOctree p = new PointCloudOctree(ref points, renderer, minv, maxv);
+
+            return p;
+        }
+
+        private void ReadLasWithoutCreateTree(string fileName)
+        {
+            var lazReader = new laszip_dll();
+            var compressed = true;
+            lazReader.laszip_open_reader(fileName, ref compressed);
+
+            var numberOfPoints = lazReader.header.number_of_point_records;
+
+            double minx = lazReader.header.min_x;
+            double miny = lazReader.header.min_y;
+            double minz = lazReader.header.min_z;
+            double maxx = lazReader.header.max_x;
+            double maxy = lazReader.header.max_y;
+            double maxz = lazReader.header.max_z;
+
+            double centx = (minx + maxx) / 2;
+            double centy = (miny + maxy) / 2;
+            double centz = (minz + maxz) / 2;
+
+            double scale = Math.Max(Math.Max(maxx - minx, maxy - miny), (maxz - minz));
+
+            int classification = 0;
+            var coordArray = new double[3];
+            ColorPoint colorPoint = new ColorPoint();
+            Vector3d[] points = new Vector3d[numberOfPoints];
+            Vector3[] cols = new Vector3[numberOfPoints];
+
             for (int pointIndex = 0; pointIndex < numberOfPoints; pointIndex++)
             {
                 lazReader.laszip_read_point();
@@ -609,7 +799,7 @@ namespace PointCloudViewer
             //PointCloudOctree p = new PointCloudOctree(ref points, minv, maxv);
 
             shader = new Shader(
-                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.vert", 
+                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.vert",
                 Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.frag"
             );
 
@@ -625,8 +815,10 @@ namespace PointCloudViewer
         private int UnProject(Vector3d win, ref Vector3d obj)
         {
             Matrix4d modelMatrix;
+            //modelMatrix = transform.GetModelMatrix();
             GL.GetDouble(GetPName.ModelviewMatrix, out modelMatrix);
             Matrix4d projMatrix;
+            //projMatrix = camera.GetProjectionMatrix();
             GL.GetDouble(GetPName.ProjectionMatrix, out projMatrix);
             int[] viewport = new int[4];
             GL.GetInteger(GetPName.Viewport, viewport);
@@ -648,9 +840,9 @@ namespace PointCloudViewer
             Vector4d _out;
             finalMatrix = Matrix4d.Mult(modelMatrix, projMatrix);
             finalMatrix.Invert();
-            _in.X = winx;
-            _in.Y = viewport[3] - winy;
-            _in.Z = winz;
+            _in.X = (float)winx;
+            _in.Y = (float)(viewport[3] - winy);
+            _in.Z = (float)winz;
             _in.W = 1.0f;
             // Map x and y from window coordinates
             _in.X = (_in.X - viewport[0]) / viewport[2];
@@ -673,6 +865,48 @@ namespace PointCloudViewer
             return (1);
         }
 
+        //private int UnProject(Vector3d win, ref Vector3d obj)
+        //{
+        //    Matrix4 modelMatrix = transform.GetModelMatrix();
+        //    Matrix4 projMatrix = camera.GetProjectionMatrix();
+        //    int[] viewport = new int[4];
+        //    GL.GetInteger(GetPName.Viewport, viewport);
+
+        //    return UnProject(win, modelMatrix, projMatrix, viewport, ref obj);
+        //}
+
+        //private int UnProject(Vector3d win, Matrix4 modelMatrix, Matrix4 projMatrix, int[] viewport, ref Vector3d obj)
+        //{
+        //    return like_gluUnProject(win.X, win.Y, win.Z, modelMatrix, projMatrix, viewport, ref obj.X, ref obj.Y, ref obj.Z);
+        //}
+
+        //private int like_gluUnProject(double winx, double winy, double winz,
+        //    Matrix4 modelMatrix, Matrix4 projMatrix, int[] viewport,
+        //    ref double objx, ref double objy, ref double objz)
+        //{
+        //    // Compute final transformation matrix
+        //    Matrix4 finalMatrix = Matrix4.Mult(modelMatrix, projMatrix);
+        //    finalMatrix.Invert();
+        //    // Prepare input vector in normalized device coordinates (NDC)
+        //    Vector4 _in = new Vector4(
+        //        (float)((winx - viewport[0]) / viewport[2] * 2 - 1),
+        //        (float)((viewport[3] - winy - viewport[1]) / viewport[3] * 2 - 1),
+        //        (float)(winz * 2 - 1),
+        //        1.0f
+        //    );
+
+        //    // Transform to object space
+        //    Vector4 _out = Vector4.Transform(_in, finalMatrix);
+        //    if (_out.W == 0.0) // Prevent division by zero
+        //        return 0;
+
+        //    // Perspective division to obtain object coordinates
+        //    objx = _out.X / _out.W;
+        //    objy = _out.Y / _out.W;
+        //    objz = _out.Z / _out.W;
+        //    return 1;
+        //}
+
         private void screenShotToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int[] vdata = new int[4];
@@ -683,7 +917,7 @@ namespace PointCloudViewer
                 w = (w / 4 + 1) * 4;
             byte[] imgBuffer = new byte[w * h * 3];
             GL.ReadPixels(0, 0, w, h, OpenTK.Graphics.OpenGL.PixelFormat.Bgr,
-           PixelType.UnsignedByte, imgBuffer);
+            PixelType.UnsignedByte, imgBuffer);
             FlipHeight(imgBuffer, w, h);
             Bitmap bmp = BytesToImg(imgBuffer, w, h);
             bmp.Save("D:\\opentk.bmp");
@@ -902,6 +1136,16 @@ namespace PointCloudViewer
 
         private void splitContainer1_ClientSizeChanged(object sender, EventArgs e)
         {
+        }
+
+        private void splitContainer2_Panel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void splitContainer1_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
         }
 
         private void splitContainer1_SplitterMoved(object sender, SplitterEventArgs e)

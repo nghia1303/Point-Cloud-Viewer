@@ -3,24 +3,28 @@
   "WorkspaceRootPath": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\frustum.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:src\\frustum.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|byWednesday.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|byWednesday.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|d:\\[02]codes\\assignment\\pointcloudviewer\\src\\camera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:src\\camera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\renderer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:src\\renderer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\pointcloudoctree.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:pointcloudoctree.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\renderer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:src\\renderer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
@@ -31,28 +35,20 @@
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|byWednesday.csproj|solutionrelative:app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\shader\\shader.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:shader\\shader.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\shader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:src\\shader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\shader\\shader.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:shader\\shader.frag||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\properties\\assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:properties\\assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\shader\\shader.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:shader\\shader.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|byWednesday.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|byWednesday.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\[02]Codes\\Assignment\\PointCloudViewer\\properties\\assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:properties\\assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -62,7 +58,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 9,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -80,9 +76,35 @@
               "RelativeDocumentMoniker": "Form1.cs",
               "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Form1.cs",
               "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAAEYCAAAAAAAAAAAYwFYCAAAZAAAAAAAAAA==",
+              "ViewState": "AgIAADgAAAAAAAAAAAAowKUAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-14T09:57:45.477Z"
+              "WhenOpened": "2024-10-28T07:39:42.457Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Frustum.cs",
+              "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\Frustum.cs",
+              "RelativeDocumentMoniker": "src\\Frustum.cs",
+              "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\Frustum.cs",
+              "RelativeToolTip": "src\\Frustum.cs",
+              "ViewState": "AgIAAGcAAAAAAAAAAAAUwCgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-28T05:03:28.91Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Form1.cs [Design]",
+              "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Form1.cs",
+              "RelativeDocumentMoniker": "Form1.cs",
+              "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Form1.cs [Design]",
+              "RelativeToolTip": "Form1.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-27T03:20:02.357Z",
+              "EditorCaption": " [Design]"
             },
             {
               "$type": "Document",
@@ -92,14 +114,13 @@
               "RelativeDocumentMoniker": "src\\Shader.cs",
               "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\Shader.cs",
               "RelativeToolTip": "src\\Shader.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAALwAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAFYAAAAAAAAAAAAqwGMAAABfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-15T02:09:59.081Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-10-15T02:09:59.081Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "App.config",
               "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\App.config",
               "RelativeDocumentMoniker": "App.config",
@@ -112,16 +133,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "shader.vert",
               "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\shader\\shader.vert",
               "RelativeDocumentMoniker": "shader\\shader.vert",
               "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\shader\\shader.vert",
               "RelativeToolTip": "shader\\shader.vert",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAABAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-10-21T13:49:04.278Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-10-21T13:49:04.278Z"
             },
             {
               "$type": "Document",
@@ -131,7 +151,7 @@
               "RelativeDocumentMoniker": "src\\Camera.cs",
               "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\Camera.cs",
               "RelativeToolTip": "src\\Camera.cs",
-              "ViewState": "AgIAACQAAAAAAAAAAAAowCsAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-10-21T13:44:59.523Z",
               "EditorCaption": ""
@@ -150,71 +170,31 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Program.cs",
-              "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Program.cs",
-              "RelativeToolTip": "Program.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-15T06:59:55.396Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Form1.cs",
-              "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Form1.cs",
-              "RelativeDocumentMoniker": "Form1.cs",
-              "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Form1.cs",
-              "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAAMoCAAAAAAAAAAAWwEADAAAmAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-15T06:56:11Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "PointCloudOctree.cs",
               "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\PointCloudOctree.cs",
               "RelativeDocumentMoniker": "PointCloudOctree.cs",
               "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\PointCloudOctree.cs",
               "RelativeToolTip": "PointCloudOctree.cs",
-              "ViewState": "AgIAANEAAAAAAAAAAAAqwEIBAAAXAAAAAAAAAA==",
+              "ViewState": "AgIAADMBAAAAAAAAAAAqwFYBAAALAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-15T03:41:35.11Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-10-15T03:41:35.11Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "shader.frag",
-              "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\shader\\shader.frag",
-              "RelativeDocumentMoniker": "shader\\shader.frag",
-              "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\shader\\shader.frag",
-              "RelativeToolTip": "shader\\shader.frag",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAWAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-10-15T02:08:22.36Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 3,
               "Title": "Renderer.cs",
               "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\Renderer.cs",
               "RelativeDocumentMoniker": "src\\Renderer.cs",
               "ToolTip": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\src\\Renderer.cs",
               "RelativeToolTip": "src\\Renderer.cs",
-              "ViewState": "AgIAAAcAAAAAAAAAAAAnwBUAAAAVAAAAAAAAAA==",
+              "ViewState": "AgIAACEAAAAAAAAAAAApwDkAAABBAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-15T01:56:37.105Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-10-15T01:56:37.105Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 10,
               "Title": "Form1.cs [Design]",
               "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\Form1.cs",
               "RelativeDocumentMoniker": "Form1.cs",
@@ -225,7 +205,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "App.config",
               "DocumentMoniker": "D:\\[02]Codes\\Assignment\\PointCloudViewer\\App.config",
               "RelativeDocumentMoniker": "App.config",

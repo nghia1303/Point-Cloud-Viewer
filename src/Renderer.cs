@@ -5,8 +5,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
-using OpenTK.Graphics.OpenGL4;
-using static OpenTK.Graphics.OpenGL.GL;
+using OpenTK.Graphics.OpenGL;
+//using static OpenTK.Graphics.OpenGL.GL;
 
 namespace PointCloudViewer.src
 {
@@ -47,15 +47,30 @@ namespace PointCloudViewer.src
             GL.VertexAttribPointer(texLocation, 3, VertexAttribPointerType.Float, true, 0, 0);
         }
 
-        public void Draw(Shader shader)
+        public void Draw(Shader shader, GLControl glControl1)
         {
+
             GL.EnableVertexAttribArray(shader.GetAttribLocation("aPosition"));
             GL.EnableVertexAttribArray(shader.GetAttribLocation("aColor"));
 
-            shader.SetMatrix4("projection", camera.GetProjectionMatrix());
-            shader.SetMatrix4("modelView", camera.GetViewMatrix());
-
+            shader.SetMatrix4("projection", camera.GetProjectionMatrixOrtho(glControl1.Width, glControl1.Height));
+            shader.SetMatrix4("view", camera.GetViewMatrix());
             GL.DrawArrays(PrimitiveType.Points, 0, vects.Length);
+        }
+        public void DrawPoint(ref Vector3d point)
+        {
+            //GL.EnableVertexAttribArray(shader.GetAttribLocation("aPosition"));
+            //GL.EnableVertexAttribArray(shader.GetAttribLocation("aColor"));
+
+            //shader.SetMatrix4("projection", camera.GetProjectionMatrix());
+            //shader.SetMatrix4("view", camera.GetViewMatrix());
+
+            //GL.DrawArrays(PrimitiveType.Points, 0, vects.Length);
+            GL.Enable(EnableCap.ProgramPointSize);
+            GL.PointSize(30);
+            GL.Begin(PrimitiveType.Points);
+            GL.Vertex3(point.X, point.Y, point.Z);
+            GL.End();
         }
 
         //public void ReleaseBuffer()

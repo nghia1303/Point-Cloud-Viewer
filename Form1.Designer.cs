@@ -63,12 +63,11 @@ namespace PointCloudViewer
             this.checkBox2 = new System.Windows.Forms.CheckBox();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.radioButton6 = new System.Windows.Forms.RadioButton();
             this.radioButton3 = new System.Windows.Forms.RadioButton();
             this.radioButton2 = new System.Windows.Forms.RadioButton();
             this.radioButton1 = new System.Windows.Forms.RadioButton();
-            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.glControl1 = new OpenTK.GLControl();
-            this.radioButton6 = new System.Windows.Forms.RadioButton();
             this.menuStrip2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -78,9 +77,6 @@ namespace PointCloudViewer
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
-            this.splitContainer2.Panel1.SuspendLayout();
-            this.splitContainer2.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip2
@@ -340,6 +336,7 @@ namespace PointCloudViewer
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.splitContainer1.IsSplitterFixed = true;
             this.splitContainer1.Location = new System.Drawing.Point(0, 24);
             this.splitContainer1.Margin = new System.Windows.Forms.Padding(2);
             this.splitContainer1.Name = "splitContainer1";
@@ -352,10 +349,11 @@ namespace PointCloudViewer
             this.splitContainer1.Panel1.Controls.Add(this.groupBox3);
             this.splitContainer1.Panel1.Controls.Add(this.groupBox2);
             this.splitContainer1.Panel1.Controls.Add(this.groupBox1);
+            this.splitContainer1.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.splitContainer1_Panel1_Paint);
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
+            this.splitContainer1.Panel2.Controls.Add(this.glControl1);
             this.splitContainer1.Size = new System.Drawing.Size(882, 643);
             this.splitContainer1.SplitterDistance = 198;
             this.splitContainer1.SplitterWidth = 3;
@@ -471,7 +469,7 @@ namespace PointCloudViewer
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.Size = new System.Drawing.Size(197, 17);
             this.checkBox2.TabIndex = 1;
-            this.checkBox2.Text = "Calculate distance between 2 points";
+            this.checkBox2.Text = "Calculate Distance between 2 points";
             this.checkBox2.UseVisualStyleBackColor = true;
             this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
             // 
@@ -502,6 +500,18 @@ namespace PointCloudViewer
             this.groupBox1.TabIndex = 4;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Select point cloud color system";
+            // 
+            // radioButton6
+            // 
+            this.radioButton6.AutoSize = true;
+            this.radioButton6.Location = new System.Drawing.Point(6, 36);
+            this.radioButton6.Name = "radioButton6";
+            this.radioButton6.Size = new System.Drawing.Size(48, 17);
+            this.radioButton6.TabIndex = 3;
+            this.radioButton6.TabStop = true;
+            this.radioButton6.Text = "RGB";
+            this.radioButton6.UseVisualStyleBackColor = true;
+            this.radioButton6.CheckedChanged += new System.EventHandler(this.radioButton6_CheckedChanged);
             // 
             // radioButton3
             // 
@@ -542,53 +552,19 @@ namespace PointCloudViewer
             this.radioButton1.UseVisualStyleBackColor = true;
             this.radioButton1.CheckedChanged += new System.EventHandler(this.radioButton1_CheckedChanged);
             // 
-            // splitContainer2
-            // 
-            this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer2.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer2.Margin = new System.Windows.Forms.Padding(2);
-            this.splitContainer2.Name = "splitContainer2";
-            this.splitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            // 
-            // splitContainer2.Panel1
-            // 
-            this.splitContainer2.Panel1.Controls.Add(this.glControl1);
-            // 
-            // splitContainer2.Panel2
-            // 
-            this.splitContainer2.Panel2.BackColor = System.Drawing.Color.White;
-            this.splitContainer2.Panel2.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.splitContainer2_Panel2_MouseDoubleClick);
-            this.splitContainer2.Size = new System.Drawing.Size(681, 643);
-            this.splitContainer2.SplitterDistance = 412;
-            this.splitContainer2.SplitterWidth = 3;
-            this.splitContainer2.TabIndex = 0;
-            this.splitContainer2.SplitterMoved += new System.Windows.Forms.SplitterEventHandler(this.splitContainer1_SplitterMoved);
-            // 
             // glControl1
             // 
             this.glControl1.BackColor = System.Drawing.Color.Black;
             this.glControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.glControl1.Location = new System.Drawing.Point(0, 0);
             this.glControl1.Name = "glControl1";
-            this.glControl1.Size = new System.Drawing.Size(681, 412);
-            this.glControl1.TabIndex = 0;
+            this.glControl1.Size = new System.Drawing.Size(681, 643);
+            this.glControl1.TabIndex = 12;
             this.glControl1.VSync = false;
             this.glControl1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDoubleClick);
             this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
             this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
             this.glControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseUp);
-            // 
-            // radioButton6
-            // 
-            this.radioButton6.AutoSize = true;
-            this.radioButton6.Location = new System.Drawing.Point(6, 36);
-            this.radioButton6.Name = "radioButton6";
-            this.radioButton6.Size = new System.Drawing.Size(48, 17);
-            this.radioButton6.TabIndex = 3;
-            this.radioButton6.TabStop = true;
-            this.radioButton6.Text = "RGB";
-            this.radioButton6.UseVisualStyleBackColor = true;
-            this.radioButton6.CheckedChanged += new System.EventHandler(this.radioButton6_CheckedChanged);
             // 
             // Form1
             // 
@@ -620,9 +596,6 @@ namespace PointCloudViewer
             this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            this.splitContainer2.Panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
-            this.splitContainer2.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -660,8 +633,6 @@ namespace PointCloudViewer
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.SplitContainer splitContainer2;
-        private OpenTK.GLControl glControl1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton radioButton3;
         private System.Windows.Forms.RadioButton radioButton2;
@@ -681,6 +652,7 @@ namespace PointCloudViewer
         private System.Windows.Forms.RadioButton radioButton5;
         private System.Windows.Forms.RadioButton radioButton4;
         private System.Windows.Forms.RadioButton radioButton6;
+        private OpenTK.GLControl glControl1;
     }
 }
 
