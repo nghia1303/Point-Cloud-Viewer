@@ -9,3 +9,5 @@ D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.csproj.CoreC
 D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointClo.34628A32.Up2Date
 D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.exe
 D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.pdb
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\System.Buffers.dll
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\System.Buffers.xml

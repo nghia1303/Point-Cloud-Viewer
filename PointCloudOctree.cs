@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-using OpenTK;
-using OpenTK.Graphics;
+﻿using OpenTK;
 using OpenTK.Graphics.OpenGL;
-using OpenTK.Input;
-using OpenTK.Platform;
-using PointCloudViewer.src;
+using OpenTK.Graphics;
+using System;
+using System.Buffers;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms.Design;
 
 namespace PointCloudViewer
 {
@@ -34,92 +32,14 @@ namespace PointCloudViewer
         private bool OutlineInFrustum;
         private string pointCloudColor;
         private bool isLeaf = false;
-
         #endregion Member Variable
 
-        private void DrawNodeOutline(Vector3d min_node_coordinate, Vector3d max_node_coordinate)
-        {
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, min_node_coordinate.Y, min_node_coordinate.Z);//(0,0,0)
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, min_node_coordinate.Y, min_node_coordinate.Z);//(1,0,0)
-
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, max_node_coordinate.Y, min_node_coordinate.Z);//(0,1,0)
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, max_node_coordinate.Y, min_node_coordinate.Z);//(1,1,0)
-
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, min_node_coordinate.Y, min_node_coordinate.Z);//(0,0,0)
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, max_node_coordinate.Y, min_node_coordinate.Z);//(0,1,0)
-
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, min_node_coordinate.Y, min_node_coordinate.Z);//(1,0,0)
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, max_node_coordinate.Y, min_node_coordinate.Z);//(1,1,0)
-
-            GL.End();
-
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, min_node_coordinate.Y, max_node_coordinate.Z);//(0,0,1)
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, min_node_coordinate.Y, max_node_coordinate.Z);//(1,0,1)
-
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, max_node_coordinate.Y, max_node_coordinate.Z);//(0,1,1)
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, max_node_coordinate.Y, max_node_coordinate.Z);//(1,1,1)
-
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, min_node_coordinate.Y, max_node_coordinate.Z);//(0,0,1)
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, max_node_coordinate.Y, max_node_coordinate.Z);//(0,1,1)
-
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, min_node_coordinate.Y, max_node_coordinate.Z);//(1,0,1)
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, max_node_coordinate.Y, max_node_coordinate.Z);//(1,1,1)
-
-            GL.End();
-
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, min_node_coordinate.Y, min_node_coordinate.Z);
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, min_node_coordinate.Y, max_node_coordinate.Z);
-            GL.End();
-
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, max_node_coordinate.Y, max_node_coordinate.Z);
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, max_node_coordinate.Y, min_node_coordinate.Z);
-            GL.End();
-
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, min_node_coordinate.Y, min_node_coordinate.Z);
-            GL.Color4(Color4.White);
-            GL.Vertex3(max_node_coordinate.X, min_node_coordinate.Y, max_node_coordinate.Z);
-            GL.End();
-
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, max_node_coordinate.Y, min_node_coordinate.Z);
-            GL.Color4(Color4.White);
-            GL.Vertex3(min_node_coordinate.X, max_node_coordinate.Y, max_node_coordinate.Z);
-            GL.End();
-        }
-
-        public PointCloudNode(ref List<int> dataIndex, ref List<ColorPoint> data,
-            ref Vector3d minv, ref Vector3d maxv)
+        public PointCloudNode(byte depth, ref List<int> dataIndex, ref List<ColorPoint> data,
+    ref Vector3d minv, ref Vector3d maxv)
         {
             if (dataIndex == null || data == null || dataIndex.Count == 0 || data.Count == 0) return;
-
-            if (dataIndex.Count < maxPointPerNode)
+    
+            if (depth >= 4)
             {
                 this.dataIndex = dataIndex;
                 this.data = data;
@@ -130,11 +50,10 @@ namespace PointCloudViewer
                 displayList = GL.GenLists(1);
                 GL.NewList(displayList, ListMode.Compile);
                 GL.Begin(PrimitiveType.Points);
-                foreach (int i in dataIndex)
+                for (int i = 0; i < dataIndex.Count; i++)
                 {
-                    ColorPoint v = data[i];
-                    GL.Color3(v.color.X, v.color.Y, v.color.Z);
-                    GL.Vertex3(v.point.X, v.point.Y, v.point.Z);
+                    GL.Color3(data[dataIndex[i]].color.X, data[dataIndex[i]].color.Y, data[dataIndex[i]].color.Z);
+                    GL.Vertex3(data[dataIndex[i]].point.X, data[dataIndex[i]].point.Y, data[dataIndex[i]].point.Z);
                 }
                 GL.End();
                 GL.EndList();
@@ -143,44 +62,67 @@ namespace PointCloudViewer
             {
                 this.dataIndex = null;
                 childNode = new PointCloudNode[8];
-                List<int>[] childIndex = new List<int>[8];
-                Vector3d[] minva = new Vector3d[8];
-                Vector3d[] maxva = new Vector3d[8];
                 Vector3d split = (minv + maxv) / 2;
-                for (int i = 0; i < 8; i++)
-                {
-                    childIndex[i] = new List<int>();
-                    minva[i] = new Vector3d();
-                    maxva[i] = new Vector3d();
-                }
-
+                List<int>[] childIndex = new List<int>[8];
+                int[] counts = new int[8];
+                byte nextDepth = (byte)(depth + 1);
                 foreach (var v in dataIndex)
                 {
-                    int index = 0;
-                    if (data[v].point.Z <= split.Z) index += 4;
-                    if (data[v].point.Y <= split.Y) index += 2;
-                    if (data[v].point.X <= split.X) index += 1;
-                    childIndex[index].Add(v);
+                    int index = GetOctantIndex(data[v].point, split);
+                    counts[index]++;
                 }
-
                 for (int i = 0; i < 8; i++)
                 {
-                    minva[i].X = (i & 1) == 0 ? split.X : minv.X;
-                    minva[i].Y = (i & 2) == 0 ? split.Y : minv.Y;
-                    minva[i].Z = (i & 4) == 0 ? split.Z : minv.Z;
-
-                    maxva[i].X = (i & 1) == 0 ? maxv.X : split.X;
-                    maxva[i].Y = (i & 2) == 0 ? maxv.Y : split.Y;
-                    maxva[i].Z = (i & 4) == 0 ? maxv.Z : split.Z;
-
-                    if (childIndex[i].Count > 0)
+                    if (counts[i] > 0)
+                        childIndex[i] = new List<int>(counts[i]);
+                }
+                foreach (var v in dataIndex)
+                {
+                    int index = GetOctantIndex(data[v].point, split);
+                    childIndex[index].Add(v);
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    if (childIndex[i]?.Count > 0)
                     {
-                        childNode[i] = new PointCloudNode(ref childIndex[i], ref data, ref minva[i], ref maxva[i]);
+                        Vector3d minva = new Vector3d(
+                            (i & 1) == 0 ? split.X : minv.X,
+                            (i & 2) == 0 ? split.Y : minv.Y,
+                            (i & 4) == 0 ? split.Z : minv.Z
+                        );
+                        Vector3d maxva = new Vector3d(
+                            (i & 1) == 0 ? maxv.X : split.X,
+                            (i & 2) == 0 ? maxv.Y : split.Y,
+                            (i & 4) == 0 ? maxv.Z : split.Z
+                        );
+                        childNode[i] = new PointCloudNode(nextDepth, ref childIndex[i], ref data, ref minva, ref maxva);
                     }
                 }
             }
         }
 
+        private void GenerateDisplayList()
+        {
+            isLeaf = true;
+            displayList = GL.GenLists(1);
+            GL.NewList(displayList, ListMode.Compile);
+            GL.Begin(PrimitiveType.Points);
+            foreach (var index in dataIndex)
+            {
+                GL.Color3(data[index].color.X, data[index].color.Y, data[index].color.Z);
+                GL.Vertex3(data[index].point.X, data[index].point.Y, data[index].point.Z);
+            }
+            GL.End();
+            GL.EndList();
+        }
+        private int GetOctantIndex(Vector3d point, Vector3d split)
+        {
+            int index = 0;
+            if (point.Z <= split.Z) index += 4;
+            if (point.Y <= split.Y) index += 2;
+            if (point.X <= split.X) index += 1;
+            return index;
+        }
 
         public void Render(int pointSize, bool showTreeNodeOutline, string pointCloudColor, double[,] frustum)
         {
@@ -192,7 +134,6 @@ namespace PointCloudViewer
             {
                 return;
             }
-
             if (dataIndex != null)
             {
                 GL.PointSize(pointSize);
@@ -203,7 +144,6 @@ namespace PointCloudViewer
                     DrawNodeOutline(minCoordinate, maxCoordinate);
                 }
             }
-
             if (childNode != null)
             {
                 for (int i = 0; i < 8; i++)
@@ -237,15 +177,12 @@ namespace PointCloudViewer
             }
             return true;
         }
-
+       
         public void FindClosestPoint(double[,] frustum, Vector3d nearPoint, Vector3d farPoint,
             ref Point3DExt closestPoint)
         {
             if (!OutlineInFrustum && isLeaf)
                 return;
-
-            Vector3d line;
-            line = farPoint - nearPoint;
 
             if (dataIndex != null)
             {
@@ -253,11 +190,10 @@ namespace PointCloudViewer
                 foreach (int index in dataIndex)
                 {
                     distance = CalculateDistance(data[index].point, farPoint, nearPoint);
-
-                    if (closestPoint.flag > distance)
+                    if (closestPoint.Flag > distance)
                     {
-                        closestPoint.point = data[index].point;
-                        closestPoint.flag = distance;
+                        closestPoint.Point = data[index].point;
+                        closestPoint.Flag = distance;
                     }
                 }
             }
@@ -272,16 +208,25 @@ namespace PointCloudViewer
                 }
             }
         }
+        private double CalculateDistance(Vector3d point, Vector3d lineStart, Vector3d lineEnd)
+        {
+            // Calculate vectors
+            Vector3d line = lineEnd - lineStart;
+            Vector3d pointToStart = point - lineStart;
 
+            // Calculate cross product
+            Vector3d cross = Vector3d.Cross(pointToStart, line);
+
+            // Distance formula: |cross| / |line|
+            return cross.Length / line.Length;
+        }
         private double CalculateSquare(double lenght1, double lenght2, double lenght3)
         {
             double s;
-
             double half_circumference = (lenght1 + lenght2 + lenght3) / 2;
             double ss = half_circumference * (half_circumference - lenght1)
                 * (half_circumference - lenght2) * (half_circumference - lenght3);
             s = Math.Sqrt(ss);
-
             return s;
         }
 
@@ -290,67 +235,118 @@ namespace PointCloudViewer
             double x = 100 * (point1.X - point2.X);
             double y = 100 * (point1.Y - point2.Y);
             double z = 100 * (point1.Z - point2.Z);
-
             double ll = x * x + y * y + z * z;
             double l = Math.Sqrt(ll);
-
             return l;
         }
 
-        private double CalculateDistance(Vector3d now_point, Vector3d far_point, Vector3d near_point)
+        private void DrawNodeOutline(Vector3d midNodeCoordinate, Vector3d maxNodeCoordinate)
         {
-            double now_far_distance = CalculateLength(now_point, far_point);
-            double now_near_distance = CalculateLength(now_point, near_point);
-            double near_far_distance = CalculateLength(near_point, far_point);
+            GL.Begin(PrimitiveType.Lines);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, midNodeCoordinate.Y, midNodeCoordinate.Z);//(0,0,0)
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, midNodeCoordinate.Y, midNodeCoordinate.Z);//(1,0,0)
 
-            double triangle_square = CalculateSquare(now_far_distance, now_near_distance, near_far_distance);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, maxNodeCoordinate.Y, midNodeCoordinate.Z);//(0,1,0)
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, maxNodeCoordinate.Y, midNodeCoordinate.Z);//(1,1,0)
 
-            double distance = (2 * triangle_square / 10000) / (near_far_distance / 100);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, midNodeCoordinate.Y, midNodeCoordinate.Z);//(0,0,0)
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, maxNodeCoordinate.Y, midNodeCoordinate.Z);//(0,1,0)
 
-            return distance;
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, midNodeCoordinate.Y, midNodeCoordinate.Z);//(1,0,0)
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, maxNodeCoordinate.Y, midNodeCoordinate.Z);//(1,1,0)
+
+            GL.End();
+
+            GL.Begin(PrimitiveType.Lines);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, midNodeCoordinate.Y, maxNodeCoordinate.Z);//(0,0,1)
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, midNodeCoordinate.Y, maxNodeCoordinate.Z);//(1,0,1)
+
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, maxNodeCoordinate.Y, maxNodeCoordinate.Z);//(0,1,1)
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, maxNodeCoordinate.Y, maxNodeCoordinate.Z);//(1,1,1)
+
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, midNodeCoordinate.Y, maxNodeCoordinate.Z);//(0,0,1)
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, maxNodeCoordinate.Y, maxNodeCoordinate.Z);//(0,1,1)
+
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, midNodeCoordinate.Y, maxNodeCoordinate.Z);//(1,0,1)
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, maxNodeCoordinate.Y, maxNodeCoordinate.Z);//(1,1,1)
+
+            GL.End();
+
+            GL.Begin(PrimitiveType.Lines);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, midNodeCoordinate.Y, midNodeCoordinate.Z);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, midNodeCoordinate.Y, maxNodeCoordinate.Z);
+            GL.End();
+
+            GL.Begin(PrimitiveType.Lines);
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, maxNodeCoordinate.Y, maxNodeCoordinate.Z);
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, maxNodeCoordinate.Y, midNodeCoordinate.Z);
+            GL.End();
+
+            GL.Begin(PrimitiveType.Lines);
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, midNodeCoordinate.Y, midNodeCoordinate.Z);
+            GL.Color4(Color4.White);
+            GL.Vertex3(maxNodeCoordinate.X, midNodeCoordinate.Y, maxNodeCoordinate.Z);
+            GL.End();
+
+            GL.Begin(PrimitiveType.Lines);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, maxNodeCoordinate.Y, midNodeCoordinate.Z);
+            GL.Color4(Color4.White);
+            GL.Vertex3(midNodeCoordinate.X, maxNodeCoordinate.Y, maxNodeCoordinate.Z);
+            GL.End();
         }
     }
 
-    internal class PointCloudOctree
+    internal class PointCloudOctree : IDisposable
     {
-        private readonly PointCloudNode root;
-        private readonly List<int> dataIndex;
-        private Renderer renderer;
-        public PointCloudOctree(ref Vector3d[] data,
-            Vector3d minv, Vector3d maxv)
+        private PointCloudNode root;
+        private List<int> dataIndex;
+        public PointCloudOctree(ref List<ColorPoint> data,
+            ref Vector3d minv, ref Vector3d maxv)
         {
             if (data == null)
                 return;
-            //if (data.Count == 0)
-            //    return;
-            //dataIndex = Enumerable.Range(0, data.Count).ToList();
-
-            //double[] vertices = new double[data.Length * 3];
-            //for (int i = 0; i < data.Length; i++)
-            //{
-            //    vertices[i] = data[i].point.X;
-            //    vertices[i + 1] = data[i].point.Y;
-            //    vertices[i + 2] = data[i].point.Z;
-            //}
-            //root = new PointCloudNode(ref dataIndex, ref data, ref minv, ref maxv);
+            if (data.Count == 0)
+                return;
+            dataIndex = Enumerable.Range(0, data.Count).ToList();
+            root = new PointCloudNode(0, ref dataIndex, ref data, ref minv, ref maxv);
         }
-
-        //public void Renderer(int pointSize, bool showTreeNodeOutline, string pointCloudColor, double[,] frustum)
-        //{
-        //if (root != null)
-        //    root.Renderer(pointSize, showTreeNodeOutline, pointCloudColor, frustum);
-        //}
-
-        public void Render(Shader shader, int pointSize, bool showTreeNodeOutline, string pointCloudColor, double[,] frustum)
+        public void Render(int pointSize, bool showTreeNodeOutline, string pointCloudColor, double[,] frustum)
         {
-            renderer.Draw(shader);
+            if (root != null)
+                root.Render(pointSize, showTreeNodeOutline, pointCloudColor, frustum);
         }
-
         public void FindClosestPoint(double[,] frustum, Vector3d nearPoint, Vector3d farPoint,
             ref Point3DExt closestPoint)
         {
             if (root != null)
                 root.FindClosestPoint(frustum, nearPoint, farPoint, ref closestPoint);
+        }
+        public void Dispose()
+        {
+            root = null;
+            dataIndex = null;
         }
     }
 }

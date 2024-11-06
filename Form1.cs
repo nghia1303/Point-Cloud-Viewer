@@ -2,12 +2,11 @@
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
-using PointCloudViewer.src;
+using PointCloudViewer.service;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -15,8 +14,8 @@ namespace PointCloudViewer
 {
     internal struct Point3DExt
     {
-        public Vector3d point;
-        public double flag;
+        public Vector3d Point;
+        public double Flag;
     }
 
     public partial class Form1 : Form
@@ -30,9 +29,11 @@ namespace PointCloudViewer
         private double angleX = 0;
         private double angleY = 0;
         private float scaling = 1.0f;
+        private Vector3d minv;
+        private Vector3d maxv;
         private string primtiveObject = "las";
         private bool showTreeNodeOutline = false;
-        private double[,] mFrustum = new double[6, 4];
+        private double[,] frustum = new double[6, 4];
         private bool bLeftButtonPushed = false;
         private bool bRightButtonPushed = false;
         private Point leftButtonPosition;
@@ -40,13 +41,16 @@ namespace PointCloudViewer
         private PointCloudOctree pco;
         private string pointCloudColor = "rainbow";
         private bool calculateTwoPointsDistance = false;
-        private List<Point3DExt> two_points = new List<Point3DExt>(2);
-        private int num_two_points = -1;
+        private List<Point3DExt> twoPoints = new List<Point3DExt>(2);
+        private int numTwoPoints = -1;
         private float fov = (float)Math.PI / 3.0f;
         private bool perspectiveProjection = false;
         private bool hasLas = false;
-        private Shader shader;
-        private Renderer renderer;
+        private bool isCutPoint = false;
+        private Vector3d mousePos = Vector3d.Zero;
+        private List<ColorPoint> points;
+        private Point3DExt pivotPoint;
+        private List<Vector3d> edge;
         #endregion Global Variable
 
         #region Window Functions
@@ -121,33 +125,12 @@ namespace PointCloudViewer
             GL.End();
         }
 
-        private void DrawPointCloud()
-        {
-            /*if (points == null)
-                return;
-
-            GL.PointSize(pointSize);
-
-            GL.Begin(PrimitiveType.Points);
-
-            for (int i = 0; i < points.Count; i++)
-            {
-                Vector3d cr = colors[i];
-                Vector3d v = points[i];
-
-                GL.Color3(cr.X, cr.Y, cr.Z);
-                GL.Vertex3(v.X, v.Y, v.Z);
-            }
-
-            GL.End();*/
-        }
-
         #endregion Draw
 
         private void InitialGL()
         {
-            //GL.ShadeModel(ShadingModel.Smooth);
-            GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            GL.ShadeModel(ShadingModel.Smooth);
+            GL.ClearColor(0.0f, 0.2f, 0.2f, 0.2f);
             GL.ClearDepth(1.0f);
             GL.Enable(EnableCap.DepthTest);
             SetupViewport();
@@ -172,51 +155,111 @@ namespace PointCloudViewer
             }
             else
             {
+                float n = scaling;
                 aspect = (w >= h) ? (1.0 * w / h) : (1.0 * h / w);
+                float left = -n * 0.5f, right = n * 0.5f, down = (float)(-n * 0.5f / aspect), up = (float)(n * 0.5f / aspect);
                 if (w <= h)
-                    GL.Ortho(-1, 1, -aspect, aspect, -10, 10);
+                    GL.Ortho(-1, 1, -aspect, aspect, -10, 100);
                 else
-                    GL.Ortho(-aspect, aspect, -1, 1, -10, 10);
+                    GL.Ortho(left, right, down, up, -10.0f, 10.0f);
                 GL.Viewport(0, 0, w, h);
             }
         }
 
-        private void Render(int point_size, bool ShowOctreeOutline, string PointCloudColor)
+        private Matrix4d modelViewMatrix = Matrix4d.Identity;
+        private Matrix4d modelMatrix = Matrix4d.Identity;
+        private float currentYaw = 0;
+        private float currentPitch = 0;
+        private float previousYaw = 0;
+        private float previousPitch = 0;
+        private float offsetYaw = 0;
+        private float offsetPitch = 0;
+
+        private float currentTransX = 0;
+        private float currentTransY = 0;
+        private float previousTransX = 0;
+        private float previousTransY = 0;
+        private float offsetTransX = 0;
+        private float offsetTransY = 0;
+        private void Render(int pointSize, bool ShowOctreeOutline, string pointCloudColor)
         {
+            glControl1.MakeCurrent();
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.MatrixMode(MatrixMode.Modelview);
 
+            currentYaw = previousYaw + offsetYaw;
+            currentPitch = previousPitch + offsetPitch;
+            currentTransX = previousTransX + offsetTransX;
+            currentTransY = previousTransY + offsetTransY;
 
-            //GL.MatrixMode(MatrixMode.Projection);
-            //GL.LoadIdentity();
+            GL.LoadMatrix(ref modelViewMatrix);
 
-            //if (perspectiveProjection)
-            //    GL.Translate(transX / 5, transY / 5, -1);
-            //else
-            //    GL.Translate(transX / 5, transY / 5, 0);
-            //GL.Rotate(angleY, 1, 0, 0);
-            //GL.Rotate(angleX, 0, 1, 0);
-            //GL.Scale(scaling, scaling, scaling);
+            Vector4d transformPivot = Vector4d.Transform(new Vector4d(pivotPoint.Point, 1.0), modelMatrix);
+            Vector3d newPivot = new Vector3d(transformPivot.X, transformPivot.Y, transformPivot.Z);
 
-            //CalculateFrustum();
-            if (primtiveObject == "las")
+            Matrix4d rotationMatrix = Matrix4d.CreateRotationX(MathHelper.DegreesToRadians(-offsetPitch)) * 
+                                      Matrix4d.CreateRotationY(MathHelper.DegreesToRadians(offsetYaw));
+            Matrix4d translateToPoint = Matrix4d.CreateTranslation(newPivot);
+            Matrix4d translateFromPoint = Matrix4d.CreateTranslation(-newPivot);
+            Matrix4d transformation = translateFromPoint * rotationMatrix * translateToPoint;
+
+            modelMatrix *= transformation;
+            modelMatrix *= Matrix4d.CreateTranslation(offsetTransX, offsetTransY, 0);
+            
+            modelViewMatrix = modelMatrix;
+            
+            previousPitch = currentPitch;
+            previousYaw = currentYaw;
+            previousTransX = currentTransX;
+            previousTransY = currentTransY;
+
+            CalculateFrustum();
+            if (pco != null)
             {
-                if (pco != null)
+                SetupViewport();
+                pco.Render(pointSize, ShowOctreeOutline, pointCloudColor, frustum);
+            }
+            if (isCutPoint)
+            {
+                if (edge == null || edge.Count < 0) return;
+                GL.Disable(EnableCap.DepthTest);
+                for (int i = 0; i < edge.Count; i++)
                 {
-                    glControl1.MakeCurrent();
-                    GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                    GL.Viewport(0, 0, glControl1.ClientSize.Width, glControl1.ClientSize.Height);
-                    shader.Use();
-                    renderer.Draw(shader);
+                    if (i > 0)
+                    {
+                        GL.Begin(PrimitiveType.Lines);
+                        GL.Color3(Color.Yellow);
+                        GL.Vertex3(edge[i]);
+                        GL.Vertex3(edge[i - 1]);
+                        GL.End();
+                    }
+                    if (i < 2 && edge.Count <= 3)
+                    {
+                        GL.Begin(PrimitiveType.Lines);
+                        GL.Color3(Color.Yellow);
+                        GL.Vertex3(edge[edge.Count - 1]);
+                        GL.Vertex3(mousePos);
+                        GL.End();
+                    }
+                    if (i == 2 && edge.Count <= 3)
+                    {
+                        GL.Begin(PrimitiveType.Lines);
+                        GL.Color3(Color.Yellow);
+                        GL.Vertex3(mousePos);
+                        GL.Vertex3(edge[0]);
+                        GL.End();
+                    }
+                    if (i == 3)
+                    {
+                        GL.Begin(PrimitiveType.Lines);
+                        GL.Color3(Color.Yellow);
+                        GL.Vertex3(edge[i]);
+                        GL.Vertex3(edge[0]);
+                        GL.End();
+                    }
                 }
+                GL.Enable(EnableCap.DepthTest);
             }
-            else if (primtiveObject == "sphere")
-            {
-                DrawSphere();
-            }
-            else if (primtiveObject == "triangle")
-            {
-                DrawTriangle();
-            }
-
             glControl1.SwapBuffers();
         }
 
@@ -282,41 +325,41 @@ namespace PointCloudViewer
                 + (modelViewMatrix.M42 * projectionMatrix.M24) + (modelViewMatrix.M43 * projectionMatrix.M34)
                 + (modelViewMatrix.M44 * projectionMatrix.M44);
 
-            mFrustum[RIGHT, 0] = _clipMatrix[3] - _clipMatrix[0];
-            mFrustum[RIGHT, 1] = _clipMatrix[7] - _clipMatrix[4];
-            mFrustum[RIGHT, 2] = _clipMatrix[11] - _clipMatrix[8];
-            mFrustum[RIGHT, 3] = _clipMatrix[15] - _clipMatrix[12];
-            NormalizePlane(mFrustum, RIGHT);
+            frustum[RIGHT, 0] = _clipMatrix[3] - _clipMatrix[0];
+            frustum[RIGHT, 1] = _clipMatrix[7] - _clipMatrix[4];
+            frustum[RIGHT, 2] = _clipMatrix[11] - _clipMatrix[8];
+            frustum[RIGHT, 3] = _clipMatrix[15] - _clipMatrix[12];
+            NormalizePlane(frustum, RIGHT);
 
-            mFrustum[LEFT, 0] = _clipMatrix[3] + _clipMatrix[0];
-            mFrustum[LEFT, 1] = _clipMatrix[7] + _clipMatrix[4];
-            mFrustum[LEFT, 2] = _clipMatrix[11] + _clipMatrix[8];
-            mFrustum[LEFT, 3] = _clipMatrix[15] + _clipMatrix[12];
-            NormalizePlane(mFrustum, LEFT);
+            frustum[LEFT, 0] = _clipMatrix[3] + _clipMatrix[0];
+            frustum[LEFT, 1] = _clipMatrix[7] + _clipMatrix[4];
+            frustum[LEFT, 2] = _clipMatrix[11] + _clipMatrix[8];
+            frustum[LEFT, 3] = _clipMatrix[15] + _clipMatrix[12];
+            NormalizePlane(frustum, LEFT);
 
-            mFrustum[BOTTOM, 0] = _clipMatrix[3] + _clipMatrix[1];
-            mFrustum[BOTTOM, 1] = _clipMatrix[7] + _clipMatrix[5];
-            mFrustum[BOTTOM, 2] = _clipMatrix[11] + _clipMatrix[9];
-            mFrustum[BOTTOM, 3] = _clipMatrix[15] + _clipMatrix[13];
-            NormalizePlane(mFrustum, BOTTOM);
+            frustum[BOTTOM, 0] = _clipMatrix[3] + _clipMatrix[1];
+            frustum[BOTTOM, 1] = _clipMatrix[7] + _clipMatrix[5];
+            frustum[BOTTOM, 2] = _clipMatrix[11] + _clipMatrix[9];
+            frustum[BOTTOM, 3] = _clipMatrix[15] + _clipMatrix[13];
+            NormalizePlane(frustum, BOTTOM);
 
-            mFrustum[TOP, 0] = _clipMatrix[3] - _clipMatrix[1];
-            mFrustum[TOP, 1] = _clipMatrix[7] - _clipMatrix[5];
-            mFrustum[TOP, 2] = _clipMatrix[11] - _clipMatrix[9];
-            mFrustum[TOP, 3] = _clipMatrix[15] - _clipMatrix[13];
-            NormalizePlane(mFrustum, TOP);
+            frustum[TOP, 0] = _clipMatrix[3] - _clipMatrix[1];
+            frustum[TOP, 1] = _clipMatrix[7] - _clipMatrix[5];
+            frustum[TOP, 2] = _clipMatrix[11] - _clipMatrix[9];
+            frustum[TOP, 3] = _clipMatrix[15] - _clipMatrix[13];
+            NormalizePlane(frustum, TOP);
 
-            mFrustum[BACK, 0] = _clipMatrix[3] - _clipMatrix[2];
-            mFrustum[BACK, 1] = _clipMatrix[7] - _clipMatrix[6];
-            mFrustum[BACK, 2] = _clipMatrix[11] - _clipMatrix[10];
-            mFrustum[BACK, 3] = _clipMatrix[15] - _clipMatrix[14];
-            NormalizePlane(mFrustum, BACK);
+            frustum[BACK, 0] = _clipMatrix[3] - _clipMatrix[2];
+            frustum[BACK, 1] = _clipMatrix[7] - _clipMatrix[6];
+            frustum[BACK, 2] = _clipMatrix[11] - _clipMatrix[10];
+            frustum[BACK, 3] = _clipMatrix[15] - _clipMatrix[14];
+            NormalizePlane(frustum, BACK);
 
-            mFrustum[FRONT, 0] = _clipMatrix[3] + _clipMatrix[2];
-            mFrustum[FRONT, 1] = _clipMatrix[7] + _clipMatrix[6];
-            mFrustum[FRONT, 2] = _clipMatrix[11] + _clipMatrix[10];
-            mFrustum[FRONT, 3] = _clipMatrix[15] + _clipMatrix[14];
-            NormalizePlane(mFrustum, FRONT);
+            frustum[FRONT, 0] = _clipMatrix[3] + _clipMatrix[2];
+            frustum[FRONT, 1] = _clipMatrix[7] + _clipMatrix[6];
+            frustum[FRONT, 2] = _clipMatrix[11] + _clipMatrix[10];
+            frustum[FRONT, 3] = _clipMatrix[15] + _clipMatrix[14];
+            NormalizePlane(frustum, FRONT);
         }
 
         private void NormalizePlane(double[,] frustum, int side)
@@ -342,6 +385,27 @@ namespace PointCloudViewer
             {
                 bRightButtonPushed = true;
                 RightButtonPosition = e.Location;
+
+                if (pco == null)
+                    return;
+
+                Point ptClicked = e.Location;
+
+                Vector3d winxyz;
+                winxyz.X = ptClicked.X;
+                winxyz.Y = ptClicked.Y;
+                winxyz.Z = 0.0f;
+
+                Vector3d nearPoint = new Vector3d(0, 0, 0);
+                UnProject(winxyz, ref nearPoint);
+                winxyz.Z = 1.0f;
+                Vector3d farPoint = new Vector3d(0, 0, 0);
+                UnProject(winxyz, ref farPoint);
+
+                pivotPoint = new Point3DExt();
+                pivotPoint.Flag = 10000;
+
+                pco.FindClosestPoint(frustum, nearPoint, farPoint, ref pivotPoint);
             }
         }
 
@@ -349,37 +413,118 @@ namespace PointCloudViewer
         {
             bLeftButtonPushed = false;
             bRightButtonPushed = false;
+            offsetXPos = 0;
+            offsetYPos = 0;
+            offsetYaw = 0;
+            offsetPitch = 0;
+            offsetTransX = 0;
+            offsetTransY = 0;
         }
+
+        private float offsetXPos = 0;
+        private float offsetYPos = 0;
+        private float prevXPos = 0;
+        private float prevYPos = 0;
 
         private void glControl1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (bLeftButtonPushed)
             {
-                transX += (e.Location.X - leftButtonPosition.X) / 120.0;
-                transY += -(e.Location.Y - leftButtonPosition.Y) / 120.0;
+                float aspect = (float)glControl1.Width / (float)glControl1.Height;
+                float deltaX = (e.Location.X - leftButtonPosition.X) / (float)glControl1.Width;
+                float deltaY = (e.Location.Y - leftButtonPosition.Y) / (float)glControl1.Height;
+                transX += deltaX * scaling;
+                transY -= deltaY * scaling / aspect;
+                offsetXPos = e.Location.X - leftButtonPosition.X;
+                offsetYPos = e.Location.Y - leftButtonPosition.Y;
+
+                offsetTransX = (float)(transX - previousTransX);
+                offsetTransY = (float)(transY - previousTransY);
+
                 leftButtonPosition = e.Location;
-                Invalidate();
             }
             if (bRightButtonPushed)
             {
                 angleX += (e.Location.X - RightButtonPosition.X) / 10.0;
                 angleY += -(e.Location.Y - RightButtonPosition.Y) / 10.0;
+                offsetYaw = (float)(angleX - previousYaw);
+                offsetPitch = (float)(angleY - previousPitch);
+
                 RightButtonPosition = e.Location;
-                Invalidate();
             }
+            if (isCutPoint)
+            {
+                Vector3d winxyz = new Vector3d();
+                winxyz.X = e.Location.X;
+                winxyz.Y = e.Location.Y;
+                winxyz.Z = 0.3f;
+                UnProject(winxyz, ref mousePos);
+            }
+            Invalidate();
         }
 
         private void glControl1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (e.Delta > 0)
             {
-                scaling += 0.1f;
+                scaling -= 0.1f;
             }
             else if (e.Delta < 0)
+            {
+                scaling += 0.1f;
+            }
+
+            if (scaling <= 0)
+            {
+                scaling += 0.1f;
+            }
+            else if (scaling > 2.0)
             {
                 scaling -= 0.1f;
             }
             SetupViewport();
+            Invalidate();
+        }
+
+        private void glControl1_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            if (pco == null)
+                return;
+
+            if (isCutPoint && bLeftButtonPushed)
+            {
+                if (edge.Count == 4)
+                {
+                    DialogResult dialogResult = MessageBox.Show("Bạn có chắc chắn với vùng chọn?", "Warning", MessageBoxButtons.YesNo);
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        points = CutPoint.FindProjection(edge, glControl1, points);
+                        pco.Dispose();
+                        edge.Clear();
+                        pco = new PointCloudOctree(ref points, ref minv, ref maxv);
+                        GC.Collect();
+                        Invalidate();
+                        return;
+                    }
+                    else
+                    {
+                        edge.Clear();
+                        Invalidate();
+                        return;
+                    }
+                }
+                else if (offsetXPos == 0 && offsetYPos == 0)
+                {
+                    Vector3d winxyz;
+                    winxyz.X = e.Location.X;
+                    winxyz.Y = e.Location.Y;
+                    winxyz.Z = 0.3f;
+                    Vector3d vertex = new Vector3d(0, 0, 0);
+                    UnProject(winxyz, ref vertex);
+                    edge.Add(vertex);
+                }
+            }
+            Render(pointSize, showTreeNodeOutline, pointCloudColor);
             Invalidate();
         }
 
@@ -391,43 +536,41 @@ namespace PointCloudViewer
             winxyz.X = ptClicked.X;
             winxyz.Y = ptClicked.Y;
             winxyz.Z = 0.0f;
+
             Vector3d nearPoint = new Vector3d(0, 0, 0);
             UnProject(winxyz, ref nearPoint);
             winxyz.Z = 1.0f;
             Vector3d farPoint = new Vector3d(0, 0, 0);
             UnProject(winxyz, ref farPoint);
 
-            Vector3d line;
-            line = farPoint - nearPoint;
-
-            Point3DExt close_point = new Point3DExt();
-            close_point.flag = 10000;
+            Point3DExt closePoint = new Point3DExt();
+            closePoint.Flag = 10000;
 
             if (pco != null)
             {
-                pco.FindClosestPoint(mFrustum, nearPoint, farPoint, ref close_point);
+                pco.FindClosestPoint(frustum, nearPoint, farPoint, ref closePoint);
                 if (!calculateTwoPointsDistance)
-                    MessageBox.Show("Selected point coordinate：\nX：" + close_point.point.X
-                        + "\nY：" + close_point.point.Y + "\nZ：" + close_point.point.Z);
+                    MessageBox.Show("Selected point coordinate：\nX：" + closePoint.Point.X
+                        + "\nY：" + closePoint.Point.Y + "\nZ：" + closePoint.Point.Z);
                 else
                 {
-                    if (num_two_points > 0)
+                    if (numTwoPoints > 0)
                     {
-                        num_two_points = 0;
-                        two_points.Clear();
+                        numTwoPoints = 0;
+                        twoPoints.Clear();
                     }
                     else
-                        num_two_points += 1;
+                        numTwoPoints += 1;
 
-                    two_points.Add(close_point);
-                    if (num_two_points == 1)
+                    twoPoints.Add(closePoint);
+                    if (numTwoPoints == 1)
                     {
-                        double dis_points = calculateDistance(two_points[0], two_points[1]);
+                        double pointsDistance = calculateDistance(twoPoints[0], twoPoints[1]);
                         MessageBox.Show("2 selected coordinates：\n"
-                            + coordinate2string(two_points[0].point) + "\n"
-                            + coordinate2string(two_points[1].point) + "\n"
+                            + coordinate2string(twoPoints[0].Point) + "\n"
+                            + coordinate2string(twoPoints[1].Point) + "\n"
                             + "Distance between 2 selected points：\n"
-                            + Convert.ToString(dis_points));
+                            + Convert.ToString(pointsDistance));
                     }
                 }
                 Render(pointSize, showTreeNodeOutline, pointCloudColor);
@@ -453,59 +596,194 @@ namespace PointCloudViewer
             }
         }
 
+        // private PointCloudOctree ReadLas(string fileName)
+        // {
+        //     var lazReader = new laszip_dll();
+        //     var compressed = true;
+        //     lazReader.laszip_open_reader(fileName, ref compressed);
+        //
+        //     var numberOfPoints = lazReader.header.number_of_point_records;
+        //
+        //     double minx = lazReader.header.min_x;
+        //     double miny = lazReader.header.min_y;
+        //     double minz = lazReader.header.min_z;
+        //     double maxx = lazReader.header.max_x;
+        //     double maxy = lazReader.header.max_y;
+        //     double maxz = lazReader.header.max_z;
+        //
+        //     double centx = (minx + maxx) / 2;
+        //     double centy = (miny + maxy) / 2;
+        //     double centz = (minz + maxz) / 2;
+        //
+        //     double scale = Math.Max(Math.Max(maxx - minx, maxy - miny), (maxz - minz));
+        //     byte classification = 0;
+        //     var coordArray = new double[3];
+        //     ColorPoint colorPoint = new ColorPoint();
+        //     //ColorPoint[] points = new ColorPoint[numberOfPoints];
+        //     // points = new List<ColorPoint>((int)numberOfPoints);
+        //     points = new List<ColorPoint>(10000);
+        //     Vector3d crYellow = new Vector3d(1, 1, 0);
+        //     for (int pointIndex = 0; pointIndex < numberOfPoints; pointIndex++)
+        //     {
+        //         lazReader.laszip_read_point();
+        //         lazReader.laszip_get_coordinates(coordArray);
+        //
+        //         Vector3d crRed = new Vector3d(1, 0, 0);
+        //         Vector3d crOrange = new Vector3d(1, 0.647, 0);
+        //         Vector3d crGreen = new Vector3d(0, 1, 0);
+        //         Vector3d crCyan = new Vector3d(0, 0.498, 1);
+        //         Vector3d crBlue = new Vector3d(0, 0, 1);
+        //         Vector3d crPurple = new Vector3d(0.545, 0, 1);
+        //
+        //         if (pointCloudColor == "RGB")
+        //         {
+        //             colorPoint.color.X = lazReader.point.rgb[0] / 255.0;
+        //             colorPoint.color.Y = lazReader.point.rgb[1] / 255.0;
+        //             colorPoint.color.Z = lazReader.point.rgb[2] / 255.0;
+        //         }
+        //         if (pointCloudColor == "rainbow")
+        //         {
+        //             double z_1_6 = 1 * (maxz - minz) / 6 + minz;
+        //             double z_2_6 = 2 * (maxz - minz) / 6 + minz;
+        //             double z_3_6 = 3 * (maxz - minz) / 6 + minz;
+        //             double z_4_6 = 4 * (maxz - minz) / 6 + minz;
+        //             double z_5_6 = 5 * (maxz - minz) / 6 + minz;
+        //
+        //             if (coordArray[2] <= z_1_6)
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - minz) / (z_1_6 - minz) * (crOrange.X - crRed.X) + crRed.X;
+        //                 colorPoint.color.Y = (coordArray[2] - minz) / (z_1_6 - minz) * (crOrange.Y - crRed.Y) + crRed.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - minz) / (z_1_6 - minz) * (crOrange.Z - crRed.Z) + crRed.Z;
+        //             }
+        //             else if (coordArray[2] <= z_2_6)
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (crYellow.X - crOrange.X) + crOrange.X;
+        //                 colorPoint.color.Y = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (crYellow.Y - crOrange.Y) + crOrange.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (crYellow.Z - crOrange.Z) + crOrange.Z;
+        //             }
+        //             else if (coordArray[2] <= z_3_6)
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (crGreen.X - crYellow.X) + crYellow.X;
+        //                 colorPoint.color.Y = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (crGreen.Y - crYellow.Y) + crYellow.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (crGreen.Z - crYellow.Z) + crYellow.Z;
+        //             }
+        //             else if (coordArray[2] <= z_4_6)
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (crCyan.X - crGreen.X) + crGreen.X;
+        //                 colorPoint.color.Y = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (crCyan.Y - crGreen.Y) + crGreen.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (crCyan.Z - crGreen.Z) + crGreen.Z;
+        //             }
+        //             else if (coordArray[2] <= z_5_6)
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (crBlue.X - crCyan.X) + crCyan.X;
+        //                 colorPoint.color.Y = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (crBlue.Y - crCyan.Y) + crCyan.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (crBlue.Z - crCyan.Z) + crCyan.Z;
+        //             }
+        //             else
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (crPurple.X - crBlue.X) + crBlue.X;
+        //                 colorPoint.color.Y = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (crPurple.Y - crBlue.Y) + crBlue.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (crPurple.Z - crBlue.Z) + crBlue.Z;
+        //             }
+        //         }
+        //         else if (pointCloudColor == "warm")
+        //         {
+        //             double z_1_2 = 1 * (maxz - minz) / 2 + minz;
+        //
+        //             if (coordArray[2] <= z_1_2)
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (crOrange.X - crRed.X) + crRed.X;
+        //                 colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (crOrange.Y - crRed.Y) + crRed.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (crOrange.Z - crRed.Z) + crRed.Z;
+        //             }
+        //             else
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crYellow.X - crOrange.X) + crOrange.X;
+        //                 colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crYellow.Y - crOrange.Y) + crOrange.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crYellow.Z - crOrange.Z) + crOrange.Z;
+        //             }
+        //         }
+        //         else if (pointCloudColor == "cold")
+        //         {
+        //             double z_1_2 = 1 * (maxz - minz) / 2 + minz;
+        //
+        //             if (coordArray[2] <= z_1_2)
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (crCyan.X - crGreen.X) + crGreen.X;
+        //                 colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (crCyan.Y - crGreen.Y) + crGreen.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (crCyan.Z - crGreen.Z) + crGreen.Z;
+        //             }
+        //             else
+        //             {
+        //                 colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crBlue.X - crCyan.X) + crCyan.X;
+        //                 colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crBlue.Y - crCyan.Y) + crCyan.Y;
+        //                 colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crBlue.Z - crCyan.Z) + crCyan.Z;
+        //             }
+        //         }
+        //
+        //         colorPoint.point.X = (coordArray[0] - centx) / scale;
+        //         colorPoint.point.Y = (coordArray[1] - centy) / scale;
+        //         colorPoint.point.Z = (coordArray[2] - centz) / scale;
+        //         classification = lazReader.point.classification;
+        //
+        //         points.Add(colorPoint);
+        //     }
+        //     lazReader.laszip_close_reader();
+        //
+        //     minv.X = (minx - centx) / scale;
+        //     minv.Y = (miny - centy) / scale;
+        //     minv.Z = (minz - centz) / scale;
+        //
+        //     maxv.X = (maxx - centx) / scale;
+        //     maxv.Y = (maxy - centy) / scale;
+        //     maxv.Z = (maxz - centz) / scale;
+        //
+        //     PointCloudOctree p = new PointCloudOctree(ref points, ref minv, ref maxv);
+        //     return p;
+        // }
         private PointCloudOctree ReadLas(string fileName)
         {
             var lazReader = new laszip_dll();
             var compressed = true;
             lazReader.laszip_open_reader(fileName, ref compressed);
-
+        
             var numberOfPoints = lazReader.header.number_of_point_records;
-
+        
             double minx = lazReader.header.min_x;
             double miny = lazReader.header.min_y;
             double minz = lazReader.header.min_z;
             double maxx = lazReader.header.max_x;
             double maxy = lazReader.header.max_y;
             double maxz = lazReader.header.max_z;
-
+        
             double centx = (minx + maxx) / 2;
             double centy = (miny + maxy) / 2;
             double centz = (minz + maxz) / 2;
-
+        
             double scale = Math.Max(Math.Max(maxx - minx, maxy - miny), (maxz - minz));
-
-            int classification = 0;
+            byte classification = 0;
             var coordArray = new double[3];
             ColorPoint colorPoint = new ColorPoint();
-            Vector3d[] points = new Vector3d[numberOfPoints];
-            Vector3[] cols = new Vector3[numberOfPoints];
-            Matrix4[] mats = new Matrix4[]
-            {
-                Matrix4.Identity
-            };
-
-            //List<ColorPoint> points = new List<ColorPoint>((int)numberOfPoints);
-            //double[] points = new double[numberOfPoints * 3];
+            points = new List<ColorPoint>(10000);
+            Vector3d crYellow = new Vector3d(1, 1, 0);
             for (int pointIndex = 0; pointIndex < numberOfPoints; pointIndex++)
             {
                 lazReader.laszip_read_point();
                 lazReader.laszip_get_coordinates(coordArray);
-
-                Vector3d cr_red = new Vector3d(1, 0, 0);
-                Vector3d cr_orange = new Vector3d(1, 0.647, 0);
-                Vector3d cr_yellow = new Vector3d(1, 1, 0);
-                Vector3d cr_green = new Vector3d(0, 1, 0);
-                Vector3d cr_cyan = new Vector3d(0, 0.498, 1);
-                Vector3d cr_bule = new Vector3d(0, 0, 1);
-                Vector3d cr_purple = new Vector3d(0.545, 0, 1);
-
+        
+                Vector3d crRed = new Vector3d(1, 0, 0);
+                Vector3d crOrange = new Vector3d(1, 0.647, 0);
+                Vector3d crGreen = new Vector3d(0, 1, 0);
+                Vector3d crCyan = new Vector3d(0, 0.498, 1);
+                Vector3d crBlue = new Vector3d(0, 0, 1);
+                Vector3d crPurple = new Vector3d(0.545, 0, 1);
+        
                 if (pointCloudColor == "RGB")
                 {
                     colorPoint.color.X = lazReader.point.rgb[0] / 255.0;
                     colorPoint.color.Y = lazReader.point.rgb[1] / 255.0;
                     colorPoint.color.Z = lazReader.point.rgb[2] / 255.0;
                 }
-
                 if (pointCloudColor == "rainbow")
                 {
                     double z_1_6 = 1 * (maxz - minz) / 6 + minz;
@@ -513,109 +791,97 @@ namespace PointCloudViewer
                     double z_3_6 = 3 * (maxz - minz) / 6 + minz;
                     double z_4_6 = 4 * (maxz - minz) / 6 + minz;
                     double z_5_6 = 5 * (maxz - minz) / 6 + minz;
-
+        
                     if (coordArray[2] <= z_1_6)
                     {
-                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
-                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
-                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_6 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_6 - minz) * (crOrange.X - crRed.X) + crRed.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_6 - minz) * (crOrange.Y - crRed.Y) + crRed.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_6 - minz) * (crOrange.Z - crRed.Z) + crRed.Z;
                     }
                     else if (coordArray[2] <= z_2_6)
                     {
-                        colorPoint.color.X = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
-                        colorPoint.color.Y = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
-                        colorPoint.color.Z = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
+                        colorPoint.color.X = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (crYellow.X - crOrange.X) + crOrange.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (crYellow.Y - crOrange.Y) + crOrange.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_6) / (z_2_6 - z_1_6) * (crYellow.Z - crOrange.Z) + crOrange.Z;
                     }
                     else if (coordArray[2] <= z_3_6)
                     {
-                        colorPoint.color.X = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.X - cr_yellow.X) + cr_yellow.X;
-                        colorPoint.color.Y = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Y - cr_yellow.Y) + cr_yellow.Y;
-                        colorPoint.color.Z = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (cr_green.Z - cr_yellow.Z) + cr_yellow.Z;
+                        colorPoint.color.X = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (crGreen.X - crYellow.X) + crYellow.X;
+                        colorPoint.color.Y = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (crGreen.Y - crYellow.Y) + crYellow.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_2_6) / (z_3_6 - z_2_6) * (crGreen.Z - crYellow.Z) + crYellow.Z;
                     }
                     else if (coordArray[2] <= z_4_6)
                     {
-                        colorPoint.color.X = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.X - cr_green.X) + cr_green.X;
-                        colorPoint.color.Y = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
-                        colorPoint.color.Z = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
+                        colorPoint.color.X = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (crCyan.X - crGreen.X) + crGreen.X;
+                        colorPoint.color.Y = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (crCyan.Y - crGreen.Y) + crGreen.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_3_6) / (z_4_6 - z_3_6) * (crCyan.Z - crGreen.Z) + crGreen.Z;
                     }
                     else if (coordArray[2] <= z_5_6)
                     {
-                        colorPoint.color.X = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
-                        colorPoint.color.Y = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
-                        colorPoint.color.Z = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
+                        colorPoint.color.X = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (crBlue.X - crCyan.X) + crCyan.X;
+                        colorPoint.color.Y = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (crBlue.Y - crCyan.Y) + crCyan.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_4_6) / (z_5_6 - z_4_6) * (crBlue.Z - crCyan.Z) + crCyan.Z;
                     }
                     else
                     {
-                        colorPoint.color.X = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.X - cr_bule.X) + cr_bule.X;
-                        colorPoint.color.Y = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Y - cr_bule.Y) + cr_bule.Y;
-                        colorPoint.color.Z = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (cr_purple.Z - cr_bule.Z) + cr_bule.Z;
+                        colorPoint.color.X = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (crPurple.X - crBlue.X) + crBlue.X;
+                        colorPoint.color.Y = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (crPurple.Y - crBlue.Y) + crBlue.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_5_6) / (maxz - z_5_6) * (crPurple.Z - crBlue.Z) + crBlue.Z;
                     }
                 }
                 else if (pointCloudColor == "warm")
                 {
                     double z_1_2 = 1 * (maxz - minz) / 2 + minz;
-
+        
                     if (coordArray[2] <= z_1_2)
                     {
-                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.X - cr_red.X) + cr_red.X;
-                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Y - cr_red.Y) + cr_red.Y;
-                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_orange.Z - cr_red.Z) + cr_red.Z;
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (crOrange.X - crRed.X) + crRed.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (crOrange.Y - crRed.Y) + crRed.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (crOrange.Z - crRed.Z) + crRed.Z;
                     }
                     else
                     {
-                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.X - cr_orange.X) + cr_orange.X;
-                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Y - cr_orange.Y) + cr_orange.Y;
-                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_yellow.Z - cr_orange.Z) + cr_orange.Z;
+                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crYellow.X - crOrange.X) + crOrange.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crYellow.Y - crOrange.Y) + crOrange.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crYellow.Z - crOrange.Z) + crOrange.Z;
                     }
                 }
                 else if (pointCloudColor == "cold")
                 {
                     double z_1_2 = 1 * (maxz - minz) / 2 + minz;
-
+        
                     if (coordArray[2] <= z_1_2)
                     {
-                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.X - cr_green.X) + cr_green.X;
-                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Y - cr_green.Y) + cr_green.Y;
-                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (cr_cyan.Z - cr_green.Z) + cr_green.Z;
+                        colorPoint.color.X = (coordArray[2] - minz) / (z_1_2 - minz) * (crCyan.X - crGreen.X) + crGreen.X;
+                        colorPoint.color.Y = (coordArray[2] - minz) / (z_1_2 - minz) * (crCyan.Y - crGreen.Y) + crGreen.Y;
+                        colorPoint.color.Z = (coordArray[2] - minz) / (z_1_2 - minz) * (crCyan.Z - crGreen.Z) + crGreen.Z;
                     }
                     else
                     {
-                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.X - cr_cyan.X) + cr_cyan.X;
-                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Y - cr_cyan.Y) + cr_cyan.Y;
-                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (cr_bule.Z - cr_cyan.Z) + cr_cyan.Z;
+                        colorPoint.color.X = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crBlue.X - crCyan.X) + crCyan.X;
+                        colorPoint.color.Y = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crBlue.Y - crCyan.Y) + crCyan.Y;
+                        colorPoint.color.Z = (coordArray[2] - z_1_2) / (maxz - z_1_2) * (crBlue.Z - crCyan.Z) + crCyan.Z;
                     }
                 }
-
+        
                 colorPoint.point.X = (coordArray[0] - centx) / scale;
                 colorPoint.point.Y = (coordArray[1] - centy) / scale;
                 colorPoint.point.Z = (coordArray[2] - centz) / scale;
                 classification = lazReader.point.classification;
-
-                points[pointIndex] = colorPoint.point;
-                cols[pointIndex] = (Vector3)colorPoint.color;
+        
+                points.Add(colorPoint);
             }
             lazReader.laszip_close_reader();
-
-            Vector3d minv;
+        
             minv.X = (minx - centx) / scale;
             minv.Y = (miny - centy) / scale;
             minv.Z = (minz - centz) / scale;
-
-            Vector3d maxv;
+        
             maxv.X = (maxx - centx) / scale;
             maxv.Y = (maxy - centy) / scale;
             maxv.Z = (maxz - centz) / scale;
-
-            PointCloudOctree p = new PointCloudOctree(ref points, minv, maxv);
-
-            shader = new Shader(
-                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.vert", 
-                Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + "/shader/shader.frag"
-            );
-            shader.Use();
-            renderer = new Renderer(ref points, ref cols, ref mats, shader);
-            renderer.Init();
-
+        
+            PointCloudOctree p = new PointCloudOctree(ref points, ref minv, ref maxv);
             return p;
         }
 
@@ -767,21 +1033,6 @@ namespace PointCloudViewer
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            if (textBox1.Text == "")
-            {
-                return;
-            }
-
-            int a = Int32.Parse(textBox1.Text);
-
-            if (a <= 0 || a >= 10)
-            {
-                a = 1;
-            }
-
-            pointSize = a;
-
-            Invalidate();
         }
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
@@ -802,9 +1053,9 @@ namespace PointCloudViewer
 
         private double calculateDistance(Point3DExt point1, Point3DExt point2)
         {
-            double x = point1.point.X - point2.point.X;
-            double y = point1.point.Y - point2.point.Y;
-            double z = point1.point.Z - point2.point.Z;
+            double x = point1.Point.X - point2.Point.X;
+            double y = point1.Point.Y - point2.Point.Y;
+            double z = point1.Point.Z - point2.Point.Z;
 
             double dd = x * x + y * y + z * z;
             double d = Math.Sqrt(dd);
@@ -814,12 +1065,6 @@ namespace PointCloudViewer
 
         private void instructionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("登陆后，从打开菜单中选择绘制的图像\n" +
-                "鼠标左键可以控制物体平移\n" +
-                "鼠标右键可以控制物体旋转\n" +
-                "鼠标滚轮可以控制物体缩放\n" +
-                "双击鼠标可以选点" +
-                "复选框可以选择绘制包围核（默认不绘制），也可以选择计算两点间距离（默认不计算）");
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -909,6 +1154,45 @@ namespace PointCloudViewer
             {
                 SetupViewport();
                 Invalidate();
+            }
+        }
+
+        private void cutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!isCutPoint)
+            {
+                //glControl1.MouseMove -= glControl1_MouseMove;
+                lbl_Mode.Text = "Mode: Cut point cloud";
+                isCutPoint = true;
+                edge = new List<Vector3d>();
+                btn_OnOffMode.Visible = true;
+            }
+            else
+            {
+                //glControl1.MouseMove += glControl1_MouseMove;
+                lbl_Mode.Text = "";
+                isCutPoint = false;
+                edge = null;
+                btn_OnOffMode.Visible = false;
+            }
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            int a = (int)numeric_PointSize.Value;
+            pointSize = a;
+            Invalidate();
+        }
+
+        private void btn_OnOffMode_Click(object sender, EventArgs e)
+        {
+            if (isCutPoint)
+            {
+                //glControl1.MouseMove += glControl1_MouseMove;
+                lbl_Mode.Text = "";
+                isCutPoint = false;
+                edge = null;
+                btn_OnOffMode.Visible = false;
             }
         }
     }
