@@ -11,3 +11,5 @@ D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.exe
 D:\[02]Codes\Assignment\PointCloudViewer\obj\Debug\PointCloudViewer.pdb
 D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\System.Buffers.dll
 D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\System.Buffers.xml
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\Newtonsoft.Json.dll
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Debug\Newtonsoft.Json.xml

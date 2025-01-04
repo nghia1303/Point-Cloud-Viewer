@@ -1,0 +1,15 @@
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointCloudViewer.csproj.AssemblyReference.cache
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointCloudViewer.Form1.resources
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointCloudViewer.Properties.Resources.resources
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointCloudViewer.csproj.GenerateResource.cache
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointCloudViewer.csproj.CoreCompileInputs.cache
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Release\PointCloudViewer.exe.config
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Release\PointCloudViewer.exe
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Release\PointCloudViewer.pdb
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Release\Newtonsoft.Json.dll
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Release\System.Buffers.dll
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Release\Newtonsoft.Json.xml
+D:\[02]Codes\Assignment\PointCloudViewer\bin\Release\System.Buffers.xml
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointClo.34628A32.Up2Date
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointCloudViewer.exe
+D:\[02]Codes\Assignment\PointCloudViewer\obj\Release\PointCloudViewer.pdb

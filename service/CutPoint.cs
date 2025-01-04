@@ -19,10 +19,10 @@ namespace PointCloudViewer.service
             Vector3d edge2 = pointC - pointA;
             Vector3d planeNormal = Vector3d.Cross(edge1, edge2).Normalized();
 
-            // Find a point on the plane (any of the three given points can be used)
+            // Find a Point on the plane (any of the three given points can be used)
             Vector3d planePoint = pointA;
 
-            // Calculate the projection point using previously defined functions
+            // Calculate the projection Point using previously defined functions
             return GetProjectionPoint(pointP, planeNormal, planePoint);
         }
         private static Vector3d GetProjectionPoint(Vector3d pointP, Vector3d planeNormal, Vector3d planePoint)
@@ -34,7 +34,7 @@ namespace PointCloudViewer.service
             double t = Vector3d.Dot(planePoint - pointP, planeNormal) / Vector3d.Dot(lineDirection, planeNormal);
             //t = (planePoint - pointP).planeNormal / (planeNormal.planeNormal)
 
-            // Calculate the projection point
+            // Calculate the projection Point
             Vector3d projectionPoint = pointP + t * lineDirection;
 
             return projectionPoint;
@@ -116,7 +116,7 @@ namespace PointCloudViewer.service
             {
                 for (int i = range.Item1; i < range.Item2; i++)
                 {
-                    Vector3d projectionPoint = GetProjectionPoint(points[i].point, pointA, pointB, pointC);
+                    Vector3d projectionPoint = GetProjectionPoint(points[i].Point, pointA, pointB, pointC);
                     if (TransformCoordinateAxes(pointA, pointB, pointC, projectionPoint, glControl1, midpoints))
                     {
                         toRemove[i] = true;
