@@ -30,16 +30,13 @@ namespace PointCloudViewer.service
                     Title = "Lưu tệp",
                     DefaultExt = "txt"
                 };
-
                 if (saveFileDialog.ShowDialog() != DialogResult.OK)
                 {
                     return 0;
                 }
                 if (saveFileDialog.FileName == "")
                     return 0;
-
                 string extension = Path.GetExtension(saveFileDialog.FileName).ToLower();
-
                 double minx = points.Min(p => p.Point.X);
                 double miny = points.Min(p => p.Point.Y);
                 double minz = points.Min(p => p.Point.Z);
@@ -47,17 +44,17 @@ namespace PointCloudViewer.service
                 double maxy = points.Max(p => p.Point.Y);
                 double maxz = points.Max(p => p.Point.Z);
 
-                if (extension == ".json")
+                switch (extension)
                 {
-                    ExportPointsToJson(points, resourceManager, saveFileDialog.FileName, minx, miny, minz, maxx, maxy, maxz);
-                }
-                if (extension == ".las")
-                {
-                    ExportPointsToLas(points, resourceManager, progressBar, saveFileDialog.FileName);
-                }
-                if (extension == ".txt") 
-                {
-                    ExportPointToTxt(points, resourceManager, progressBar, saveFileDialog.FileName, minx, miny, minz, maxx, maxy, maxz);
+                    case ".json":
+                        ExportPointsToJson(points, resourceManager, saveFileDialog.FileName, minx, miny, minz, maxx, maxy, maxz);
+                        break;
+                    case ".las":
+                        ExportPointsToLas(points, resourceManager, progressBar, saveFileDialog.FileName);
+                        break;
+                    case ".txt":
+                        ExportPointToTxt(points, resourceManager, progressBar, saveFileDialog.FileName, minx, miny, minz, maxx, maxy, maxz);
+                        break;
                 }
                 return points.Count;
             }

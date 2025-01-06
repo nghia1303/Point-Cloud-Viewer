@@ -63,9 +63,9 @@ namespace PointCloudViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap CutIntside {
+        internal static System.Drawing.Bitmap images {
             get {
-                object obj = ResourceManager.GetObject("CutIntside", resourceCulture);
+                object obj = ResourceManager.GetObject("images", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -73,19 +73,9 @@ namespace PointCloudViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap CutOutside {
+        internal static System.Drawing.Bitmap openfile1 {
             get {
-                object obj = ResourceManager.GetObject("CutOutside", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap openfile {
-            get {
-                object obj = ResourceManager.GetObject("openfile", resourceCulture);
+                object obj = ResourceManager.GetObject("openfile1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -103,9 +93,9 @@ namespace PointCloudViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap scissors_glyph_icon_free_vector___enabled {
+        internal static System.Drawing.Bitmap scissors_glyph_icon_free_vector___enabled1 {
             get {
-                object obj = ResourceManager.GetObject("scissors-glyph-icon-free-vector - enabled", resourceCulture);
+                object obj = ResourceManager.GetObject("scissors-glyph-icon-free-vector - enabled1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -113,9 +103,9 @@ namespace PointCloudViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap screenshot_vector_41024405 {
+        internal static System.Drawing.Bitmap screenshot_vector_410244051 {
             get {
-                object obj = ResourceManager.GetObject("screenshot-vector-41024405", resourceCulture);
+                object obj = ResourceManager.GetObject("screenshot-vector-410244051", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -123,9 +113,9 @@ namespace PointCloudViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Web__28126_29 {
+        internal static System.Drawing.Bitmap Web__28126_291 {
             get {
-                object obj = ResourceManager.GetObject("Web__28126_29", resourceCulture);
+                object obj = ResourceManager.GetObject("Web__28126_291", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

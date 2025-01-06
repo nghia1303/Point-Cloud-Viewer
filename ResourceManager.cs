@@ -11,7 +11,7 @@ namespace PointCloudViewer
     public class ResourceManager
     {
         public laszip_header LasHeader;
-        private ResourceManager Instance;
+        private ResourceManager _instance;
         public Vector3d MaxDrawCoord { get; set; }
         public Vector3d MinDrawCoord { get; set; }
         public Vector3d MaxRealCoord { get; set; }
@@ -23,15 +23,15 @@ namespace PointCloudViewer
 
         public ResourceManager GetInstance()
         {
-            if (Instance == null)
-                Instance = this;
-            return Instance;
+            if (_instance == null)
+                _instance = this;
+            return _instance;
         }
 
         public ResourceManager(ref List<ColorPoint> points)
         {
             Points = points;
-            Instance = this;
+            _instance = this;
         }
 
         public Vector3d GetRealCoordinate(ColorPoint point)

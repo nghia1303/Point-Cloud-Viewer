@@ -118,25 +118,22 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="screenshot-vector-41024405" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\assets\screenshot-vector-41024405.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="scissors-glyph-icon-free-vector - enabled" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\assets\scissors-glyph-icon-free-vector - enabled.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="scissors-glyph-icon-free-vector" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\assets\scissors-glyph-icon-free-vector.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="openfile" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="images" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\assets\images.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="openfile1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\assets\openfile.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="CutOutside" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\assets\CutOutside.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="scissors-glyph-icon-free-vector - enabled1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\assets\scissors-glyph-icon-free-vector - enabled.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Web__28126_29" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="screenshot-vector-410244051" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\assets\screenshot-vector-41024405.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Web__28126_291" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\assets\Web__28126_29.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="CutIntside" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\assets\CutIntside.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

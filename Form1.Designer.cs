@@ -26,6 +26,10 @@ namespace PointCloudViewer
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.button1 = new System.Windows.Forms.Button();
+            this.cb_CutPoint = new System.Windows.Forms.CheckBox();
+            this.btn_SaveFile = new System.Windows.Forms.Button();
+            this.btn_OpenFile = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.numeric_PointSize = new System.Windows.Forms.NumericUpDown();
@@ -37,10 +41,6 @@ namespace PointCloudViewer
             this.radioButton2 = new System.Windows.Forms.RadioButton();
             this.radioButton1 = new System.Windows.Forms.RadioButton();
             this.glControl1 = new OpenTK.GLControl();
-            this.button1 = new System.Windows.Forms.Button();
-            this.cb_CutPoint = new System.Windows.Forms.CheckBox();
-            this.btn_SaveFile = new System.Windows.Forms.Button();
-            this.btn_OpenFile = new System.Windows.Forms.Button();
             this.menuStrip2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -142,6 +142,57 @@ namespace PointCloudViewer
             this.splitContainer1.TabIndex = 2;
             this.splitContainer1.SplitterMoved += new System.Windows.Forms.SplitterEventHandler(this.splitContainer1_SplitterMoved);
             this.splitContainer1.ClientSizeChanged += new System.EventHandler(this.splitContainer1_ClientSizeChanged);
+            // 
+            // button1
+            // 
+            this.button1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button1.BackgroundImage")));
+            this.button1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button1.Location = new System.Drawing.Point(181, 13);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(47, 51);
+            this.button1.TabIndex = 17;
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.screenShotToolStripMenuItem_Click);
+            // 
+            // cb_CutPoint
+            // 
+            this.cb_CutPoint.Appearance = System.Windows.Forms.Appearance.Button;
+            this.cb_CutPoint.BackColor = System.Drawing.Color.White;
+            this.cb_CutPoint.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("cb_CutPoint.BackgroundImage")));
+            this.cb_CutPoint.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.cb_CutPoint.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_CutPoint.Location = new System.Drawing.Point(125, 13);
+            this.cb_CutPoint.Name = "cb_CutPoint";
+            this.cb_CutPoint.Size = new System.Drawing.Size(50, 51);
+            this.cb_CutPoint.TabIndex = 16;
+            this.cb_CutPoint.Text = "\r\n";
+            this.cb_CutPoint.UseVisualStyleBackColor = false;
+            this.cb_CutPoint.Click += new System.EventHandler(this.cutToolStripMenuItem_Click);
+            // 
+            // btn_SaveFile
+            // 
+            this.btn_SaveFile.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btn_SaveFile.BackgroundImage")));
+            this.btn_SaveFile.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btn_SaveFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_SaveFile.Location = new System.Drawing.Point(71, 13);
+            this.btn_SaveFile.Name = "btn_SaveFile";
+            this.btn_SaveFile.Size = new System.Drawing.Size(50, 51);
+            this.btn_SaveFile.TabIndex = 15;
+            this.btn_SaveFile.UseVisualStyleBackColor = true;
+            this.btn_SaveFile.Click += new System.EventHandler(this.saveFileToolStripMenuItem_Click);
+            // 
+            // btn_OpenFile
+            // 
+            this.btn_OpenFile.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btn_OpenFile.BackgroundImage")));
+            this.btn_OpenFile.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btn_OpenFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_OpenFile.Location = new System.Drawing.Point(13, 13);
+            this.btn_OpenFile.Name = "btn_OpenFile";
+            this.btn_OpenFile.Size = new System.Drawing.Size(52, 51);
+            this.btn_OpenFile.TabIndex = 14;
+            this.btn_OpenFile.UseVisualStyleBackColor = true;
+            this.btn_OpenFile.Click += new System.EventHandler(this.openFileToolStripMenuItem_Click);
             // 
             // progressBar1
             // 
@@ -296,57 +347,6 @@ namespace PointCloudViewer
             this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
             this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
             this.glControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseUp);
-            // 
-            // button1
-            // 
-            this.button1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button1.BackgroundImage")));
-            this.button1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(181, 13);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(47, 51);
-            this.button1.TabIndex = 17;
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.screenShotToolStripMenuItem_Click);
-            // 
-            // cb_CutPoint
-            // 
-            this.cb_CutPoint.Appearance = System.Windows.Forms.Appearance.Button;
-            this.cb_CutPoint.BackColor = System.Drawing.Color.White;
-            this.cb_CutPoint.BackgroundImage = global::PointCloudViewer.Properties.Resources.scissors_glyph_icon_free_vector;
-            this.cb_CutPoint.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.cb_CutPoint.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_CutPoint.Location = new System.Drawing.Point(125, 13);
-            this.cb_CutPoint.Name = "cb_CutPoint";
-            this.cb_CutPoint.Size = new System.Drawing.Size(50, 51);
-            this.cb_CutPoint.TabIndex = 16;
-            this.cb_CutPoint.Text = "\r\n";
-            this.cb_CutPoint.UseVisualStyleBackColor = false;
-            this.cb_CutPoint.Click += new System.EventHandler(this.cutToolStripMenuItem_Click);
-            // 
-            // btn_SaveFile
-            // 
-            this.btn_SaveFile.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btn_SaveFile.BackgroundImage")));
-            this.btn_SaveFile.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btn_SaveFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_SaveFile.Location = new System.Drawing.Point(71, 13);
-            this.btn_SaveFile.Name = "btn_SaveFile";
-            this.btn_SaveFile.Size = new System.Drawing.Size(50, 51);
-            this.btn_SaveFile.TabIndex = 15;
-            this.btn_SaveFile.UseVisualStyleBackColor = true;
-            this.btn_SaveFile.Click += new System.EventHandler(this.saveFileToolStripMenuItem_Click);
-            // 
-            // btn_OpenFile
-            // 
-            this.btn_OpenFile.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btn_OpenFile.BackgroundImage")));
-            this.btn_OpenFile.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btn_OpenFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_OpenFile.Location = new System.Drawing.Point(13, 13);
-            this.btn_OpenFile.Name = "btn_OpenFile";
-            this.btn_OpenFile.Size = new System.Drawing.Size(52, 51);
-            this.btn_OpenFile.TabIndex = 14;
-            this.btn_OpenFile.UseVisualStyleBackColor = true;
-            this.btn_OpenFile.Click += new System.EventHandler(this.openFileToolStripMenuItem_Click);
             // 
             // Form1
             // 

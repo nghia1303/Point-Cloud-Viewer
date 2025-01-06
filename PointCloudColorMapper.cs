@@ -20,13 +20,13 @@ namespace PointCloudViewer
         private Vector3h Blue;
         private Vector3h Purple;
 
-        private double MinZ;
-        private double MaxZ;
+        private double _minZ;
+        private double _maxZ;
 
         public PointCloudColorMapper(double minZ, double maxZ)
         {
-            MinZ = minZ;
-            MaxZ = maxZ;
+            _minZ = minZ;
+            _maxZ = maxZ;
 
             InitializeColors();
         }
@@ -38,7 +38,7 @@ namespace PointCloudViewer
             Orange = new Vector3h(1, (Half)0.647, 0);
             Green = new Vector3h(0, 1, 0);
             Cyan = new Vector3h(0, (Half)0.498,   1);
-            Blue = new Vector3h(0, 0, 0);
+            Blue = new Vector3h(0, 0, 1);
             Purple = new Vector3h((Half)0.545, 0, 1);
         }
 
@@ -75,12 +75,12 @@ namespace PointCloudViewer
         private Vector3h MapRainbowColor(double[] coordArray)
         {
             double z = coordArray[2];
-            double zRange = MaxZ - MinZ;
+            double zRange = _maxZ - _minZ;
 
             double[] zSegments = new double[6];
             for (int i = 1; i <= 6; i++)
             {
-                zSegments[i - 1] = i * zRange / 6 + MinZ;
+                zSegments[i - 1] = i * zRange / 6 + _minZ;
             }
 
             Vector3h[] colors = new Vector3h[]
@@ -93,34 +93,34 @@ namespace PointCloudViewer
             {
                 if (z <= zSegments[i])
                 {
-                    double start = i == 0 ? MinZ : zSegments[i - 1];
+                    double start = i == 0 ? _minZ : zSegments[i - 1];
                     double end = zSegments[i];
 
                     return Interpolate(z, start, end, colors[i], colors[i + 1]);
                 }
             }
 
-            return Interpolate(z, zSegments[5], MaxZ, colors[6], colors[6]);
+            return Interpolate(z, zSegments[5], _maxZ, colors[6], colors[6]);
         }
 
         private Vector3h MapWarmColor(double[] coordArray)
         {
             double z = coordArray[2];
-            double zMidpoint = 1 * (MaxZ - MinZ) / 2 + MinZ;
+            double zMidpoint = 1 * (_maxZ - _minZ) / 2 + _minZ;
 
             return z <= zMidpoint
-                ? Interpolate(z, MinZ, zMidpoint, Red, Orange)
-                : Interpolate(z, zMidpoint, MaxZ, Orange, Yellow);
+                ? Interpolate(z, _minZ, zMidpoint, Red, Orange)
+                : Interpolate(z, zMidpoint, _maxZ, Orange, Yellow);
         }
 
         private Vector3h MapColdColor(double[] coordArray)
         {
             double z = coordArray[2];
-            double zMidpoint = 1 * (MaxZ - MinZ) / 2 + MinZ;
+            double zMidpoint = 1 * (_maxZ - _minZ) / 2 + _minZ;
 
             return z <= zMidpoint
-                ? Interpolate(z, MinZ, zMidpoint, Green, Cyan)
-            : Interpolate(z, zMidpoint, MaxZ, Cyan, Blue);
+                ? Interpolate(z, _minZ, zMidpoint, Green, Cyan)
+            : Interpolate(z, zMidpoint, _maxZ, Cyan, Blue);
         }
 
         private Vector3h Interpolate(double value, double start, double end, Vector3h startColor, Vector3h endColor)

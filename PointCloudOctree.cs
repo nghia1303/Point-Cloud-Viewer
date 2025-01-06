@@ -21,18 +21,18 @@ namespace PointCloudViewer
     {
         #region Member Variable
 
-        private PointCloudColorMapper pointCloudColorMapper { get; set; }
-        public const int maxPointPerNode = 50000;
-        private List<ColorPoint> data;
-        private List<int> dataIndex;
-        private PointCloudNode[] childNode;
+        private PointCloudColorMapper _pointCloudColorMapper { get; set; }
+        public const int MaxPointPerNode = 50000;
+        private List<ColorPoint> _pointCloudCollection;
+        private List<int> _pointCloudIndex;
+        private PointCloudNode[] _childNode;
         private int _displayListId;
         private bool _displayListDirty = true;
-        private Vector3d minCoordinate, maxCoordinate;
-        private Vector3d midPoint = Vector3d.Zero;
-        private bool OutlineInFrustum;
-        private string pointCloudColor;
-        private bool isLeaf = false;
+        private Vector3d _minCoordinate, _maxCoordinate;
+        private Vector3d _midPoint = Vector3d.Zero;
+        private bool _isNodeInsideFrustum;
+        private string _pointCloudColor;
+        private bool _isLeaf = false;
         private readonly object _lockObject = new object();
 
         #endregion Member Variable
@@ -42,20 +42,20 @@ namespace PointCloudViewer
         {
             if (dataIndex == null || data == null || dataIndex.Count == 0 || data.Count == 0) return;
 
-            if (dataIndex.Count < maxPointPerNode)
+            if (dataIndex.Count < MaxPointPerNode)
             {
-                this.dataIndex = dataIndex;
-                this.data = data;
-                this.pointCloudColorMapper = pointCloudColorMapper;
-                minCoordinate = minv;
-                maxCoordinate = maxv;
-                midPoint = (minv + maxv) / 2;
+                this._pointCloudIndex = dataIndex;
+                this._pointCloudCollection = data;
+                this._pointCloudColorMapper = pointCloudColorMapper;
+                _minCoordinate = minv;
+                _maxCoordinate = maxv;
+                _midPoint = (minv + maxv) / 2;
                 GenerateDisplayList(colorType);
             }
             else
             {
-                this.dataIndex = null;
-                childNode = new PointCloudNode[8];
+                this._pointCloudIndex = null;
+                _childNode = new PointCloudNode[8];
                 Vector3d split = (minv + maxv) / 2;
                 List<int>[] childIndex = new List<int>[8];
                 int[] counts = new int[8];
@@ -89,21 +89,21 @@ namespace PointCloudViewer
                             (i & 2) == 0 ? maxv.Y : split.Y,
                             (i & 4) == 0 ? maxv.Z : split.Z
                         );
-                        childNode[i] = new PointCloudNode(nextDepth, ref childIndex[i], ref data, ref minva, ref maxva, pointCloudColorMapper, colorType);
+                        _childNode[i] = new PointCloudNode(nextDepth, ref childIndex[i], ref data, ref minva, ref maxva, pointCloudColorMapper, colorType);
                     }
                 }
             }
         }
         private void GenerateDisplayList(string colorType)
         {
-            isLeaf = true;
+            _isLeaf = true;
             _displayListId = GL.GenLists(1);
             GL.NewList(_displayListId, ListMode.Compile);
             GL.Begin(PrimitiveType.Points);
-            foreach (var index in dataIndex)
+            foreach (var index in _pointCloudIndex)
             {
-                var color = data[index].Color;
-                var point = data[index].Point;
+                var color = _pointCloudCollection[index].Color;
+                var point = _pointCloudCollection[index].Point;
                 var colorArray = new double[3];
                 var coordArray = new double[3];
                 // Apply color ramp
@@ -112,7 +112,7 @@ namespace PointCloudViewer
                     colorArray[0] = color.X;
                     colorArray[1] = color.Y;
                     colorArray[2] = color.Z;
-                    color = pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
+                    color = _pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
                 }
                 else
                 {
@@ -122,35 +122,35 @@ namespace PointCloudViewer
                 }
                 if (colorType == "rainbow")
                 {
-                    color = pointCloudColorMapper.MapColor(ColorMode.Rainbow, coordArray, null);
+                    color = _pointCloudColorMapper.MapColor(ColorMode.Rainbow, coordArray, null);
                 }
                 else if (colorType == "warm")
                 {
-                    color = pointCloudColorMapper.MapColor(ColorMode.Warm, coordArray, null);
+                    color = _pointCloudColorMapper.MapColor(ColorMode.Warm, coordArray, null);
                 }
                 else if (colorType == "cold")
                 {
-                    color = pointCloudColorMapper.MapColor(ColorMode.Cold, coordArray, null);
+                    color = _pointCloudColorMapper.MapColor(ColorMode.Cold, coordArray, null);
                 }
                 GL.Color3(color.X, color.Y, color.Z);
-                GL.Vertex3(data[index].Point.X, data[index].Point.Y, data[index].Point.Z);
+                GL.Vertex3(_pointCloudCollection[index].Point.X, _pointCloudCollection[index].Point.Y, _pointCloudCollection[index].Point.Z);
             }
             GL.End();
             GL.EndList();
         }
         public void UpdatePointsColor(string colorType)
         {
-            if (dataIndex != null)
+            if (_pointCloudIndex != null)
             {
                 UpdateDisplayList(colorType);
             }
-            if (childNode != null)
+            if (_childNode != null)
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    if (childNode[i] != null)
+                    if (_childNode[i] != null)
                     {
-                        childNode[i].UpdatePointsColor(colorType);
+                        _childNode[i].UpdatePointsColor(colorType);
                     }
                 }
             }
@@ -163,9 +163,9 @@ namespace PointCloudViewer
             _displayListId = GL.GenLists(1);
             GL.NewList(_displayListId, ListMode.Compile);
             GL.Begin(PrimitiveType.Points);
-            foreach (var index in dataIndex)
+            foreach (var index in _pointCloudIndex)
             {
-                var color = data[index].Color;
+                var color = _pointCloudCollection[index].Color;
                 var colorArray = new double[3];
                 var coordArray = new double[3];
                 if (colorType == "rgb")
@@ -173,31 +173,31 @@ namespace PointCloudViewer
                     colorArray[0] = color.X;
                     colorArray[1] = color.Y;
                     colorArray[2] = color.Z;
-                    color = pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
+                    color = _pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
                 }
                 if (colorType == "rainbow")
                 {
-                    coordArray[0] = data[index].Point.X;
-                    coordArray[1] = data[index].Point.Y;
-                    coordArray[2] = data[index].Point.Z;
-                    color = pointCloudColorMapper.MapColor(ColorMode.Rainbow, coordArray);
+                    coordArray[0] = _pointCloudCollection[index].Point.X;
+                    coordArray[1] = _pointCloudCollection[index].Point.Y;
+                    coordArray[2] = _pointCloudCollection[index].Point.Z;
+                    color = _pointCloudColorMapper.MapColor(ColorMode.Rainbow, coordArray);
                 }
                 else if (colorType == "warm")
                 {
-                    coordArray[0] = data[index].Point.X;
-                    coordArray[1] = data[index].Point.Y;
-                    coordArray[2] = data[index].Point.Z;
-                    color = pointCloudColorMapper.MapColor(ColorMode.Warm, coordArray);
+                    coordArray[0] = _pointCloudCollection[index].Point.X;
+                    coordArray[1] = _pointCloudCollection[index].Point.Y;
+                    coordArray[2] = _pointCloudCollection[index].Point.Z;
+                    color = _pointCloudColorMapper.MapColor(ColorMode.Warm, coordArray);
                 }
                 else if (colorType == "cold")
                 {
-                    coordArray[0] = data[index].Point.X;
-                    coordArray[1] = data[index].Point.Y;
-                    coordArray[2] = data[index].Point.Z;
-                    color = pointCloudColorMapper.MapColor(ColorMode.Cold, coordArray);
+                    coordArray[0] = _pointCloudCollection[index].Point.X;
+                    coordArray[1] = _pointCloudCollection[index].Point.Y;
+                    coordArray[2] = _pointCloudCollection[index].Point.Z;
+                    color = _pointCloudColorMapper.MapColor(ColorMode.Cold, coordArray);
                 }
                 GL.Color3(color.X, color.Y, color.Z);
-                GL.Vertex3(data[index].Point.X, data[index].Point.Y, data[index].Point.Z);
+                GL.Vertex3(_pointCloudCollection[index].Point.X, _pointCloudCollection[index].Point.Y, _pointCloudCollection[index].Point.Z);
             }
             GL.End();
             GL.EndList();
@@ -212,31 +212,31 @@ namespace PointCloudViewer
         }
         public void Render(int pointSize, bool showTreeNodeOutline, string pointCloudColor, double[,] frustum)
         {
-            OutlineInFrustum = VoxelWithinFrustum(frustum, minCoordinate.X, minCoordinate.Y, minCoordinate.Z,
-                maxCoordinate.X, maxCoordinate.Y, maxCoordinate.Z);
-            this.pointCloudColor = pointCloudColor;
+            _isNodeInsideFrustum = VoxelWithinFrustum(frustum, _minCoordinate.X, _minCoordinate.Y, _minCoordinate.Z,
+                _maxCoordinate.X, _maxCoordinate.Y, _maxCoordinate.Z);
+            this._pointCloudColor = pointCloudColor;
 
-            if (!OutlineInFrustum && isLeaf)
+            if (!_isNodeInsideFrustum && _isLeaf)
             {
                 return;
             }
-            if (dataIndex != null)
+            if (_pointCloudIndex != null)
             {
                 GL.PointSize(pointSize);
                 GL.CallList(_displayListId);
 
                 if (showTreeNodeOutline == true)
                 {
-                    DrawNodeOutline(minCoordinate, maxCoordinate);
+                    DrawNodeOutline(_minCoordinate, _maxCoordinate);
                 }
             }
-            if (childNode != null)
+            if (_childNode != null)
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    if (childNode[i] != null)
+                    if (_childNode[i] != null)
                     {
-                        childNode[i].Render(pointSize, showTreeNodeOutline, pointCloudColor, frustum);
+                        _childNode[i].Render(pointSize, showTreeNodeOutline, pointCloudColor, frustum);
                     }
                 }
             }
@@ -265,29 +265,29 @@ namespace PointCloudViewer
         public void FindClosestPoint(double[,] frustum, Vector3d nearPoint, Vector3d farPoint,
             ref Point3DExt closestPoint)
         {
-            if (!OutlineInFrustum && isLeaf)
+            if (!_isNodeInsideFrustum && _isLeaf)
                 return;
 
-            if (dataIndex != null)
+            if (_pointCloudIndex != null)
             {
                 double distance;
-                foreach (int index in dataIndex)
+                foreach (int index in _pointCloudIndex)
                 {
-                    distance = CalculateDistance(data[index].Point, farPoint, nearPoint);
+                    distance = CalculateDistance(_pointCloudCollection[index].Point, farPoint, nearPoint);
                     if (closestPoint.Flag > distance)
                     {
-                        closestPoint.Point = data[index].Point;
+                        closestPoint.Point = _pointCloudCollection[index].Point;
                         closestPoint.Flag = distance;
                     }
                 }
             }
-            if (childNode != null)
+            if (_childNode != null)
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    if (childNode[i] != null)
+                    if (_childNode[i] != null)
                     {
-                        childNode[i].FindClosestPoint(frustum, nearPoint, farPoint, ref closestPoint);
+                        _childNode[i].FindClosestPoint(frustum, nearPoint, farPoint, ref closestPoint);
                     }
                 }
             }
@@ -333,32 +333,32 @@ namespace PointCloudViewer
         public void FindProjection(List<Vector3d> midPoints, GLControl glControl1, ref List<ColorPoint> points)
         {
             var resultPoints = new List<ColorPoint>();
-            //FindProjectionRecursive(midPoints, glControl1, ref points);
-            //List<ColorPoint> pointsTemp = new List<ColorPoint>(points.Count);
-            //for (int i = 0; i < points.Count; i++)
+            //FindProjectionRecursive(midPoints, glControl1, ref _points);
+            //List<ColorPoint> pointsTemp = new List<ColorPoint>(_points.Count);
+            //for (int i = 0; i < _points.Count; i++)
             //{
             //    if (!toRemove[i])
             //    {
-            //        pointsTemp.Add(points[i]);
+            //        pointsTemp.Add(_points[i]);
             //    }
             //}
-            //points = pointsTemp;
+            //_points = pointsTemp;
         }
         private void FindProjectionRecursive(List<Vector3d> polygon, GLControl glControl, ref List<ColorPoint> points)
         {
-            if (!OutlineInFrustum && isLeaf)
+            if (!_isNodeInsideFrustum && _isLeaf)
                 return;
 
-            // Process points in current node
-            if (dataIndex != null)
+            // Process _points in current node
+            if (_pointCloudIndex != null)
             {
                 Vector3d pointA = polygon[0];
                 Vector3d pointB = polygon[1];
                 Vector3d pointC = polygon[2];
 
-                for (int index = 0; index < dataIndex.Count; index++)
+                for (int index = 0; index < _pointCloudIndex.Count; index++)
                 {
-                    var point = data[dataIndex[index]];
+                    var point = _pointCloudCollection[_pointCloudIndex[index]];
                     Vector3d projectionPoint = GetProjectionPoint(point.Point, pointA, pointB, pointC);
 
                     if (TransformCoordinateAxes(pointA, pointB, pointC, projectionPoint, glControl, polygon))
@@ -372,13 +372,13 @@ namespace PointCloudViewer
             }
 
             // Process child nodes
-            if (childNode != null)
+            if (_childNode != null)
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    if (childNode[i] != null)
+                    if (_childNode[i] != null)
                     {
-                        childNode[i].FindProjectionRecursive(polygon, glControl, ref points);
+                        _childNode[i].FindProjectionRecursive(polygon, glControl, ref points);
                     }
                 }
             }
@@ -429,12 +429,12 @@ namespace PointCloudViewer
         }
         public static Vector3d GetProjectionPoint(Vector3d pointP, Vector3d pointA, Vector3d pointB, Vector3d pointC)
         {
-            // Calculate plane normal using points A, B, and C
+            // Calculate plane normal using _points A, B, and C
             Vector3d edge1 = pointB - pointA;
             Vector3d edge2 = pointC - pointA;
             Vector3d planeNormal = Vector3d.Cross(edge1, edge2).Normalized();
 
-            // Find a Point on the plane (any of the three given points can be used)
+            // Find a Point on the plane (any of the three given _points can be used)
             Vector3d planePoint = pointA;
 
             // Calculate the projection Point using previously defined functions
@@ -538,7 +538,7 @@ namespace PointCloudViewer
         private Vector3d _min, _max;
         private PointCloudColorMapper _pointCloudColorMapper;
         public PointCloudOctree(ref List<ColorPoint> data,
-            ref Vector3d minv, ref Vector3d maxv, PointCloudColorMapper pointCloudColorMapper, string colorType = "RGB")
+            ref Vector3d minv, ref Vector3d maxv, PointCloudColorMapper pointCloudColorMapper, string colorType = "rgb")
         {
             if (data == null)
                 return;
@@ -548,7 +548,8 @@ namespace PointCloudViewer
             _min = minv;
             _max = maxv;
             _pointCloudColorMapper = pointCloudColorMapper;
-             _root = new PointCloudNode(0, ref _dataIndex, ref data, ref minv, ref maxv, pointCloudColorMapper, colorType);
+            colorType = colorType.ToLower();
+            _root = new PointCloudNode(0, ref _dataIndex, ref data, ref minv, ref maxv, pointCloudColorMapper, colorType);
         }
         public void FindProjection(List<Vector3d> midpoints, GLControl glControl1, ref List<ColorPoint> points)
         {
