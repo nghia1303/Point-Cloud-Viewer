@@ -27,7 +27,6 @@ namespace PointCloudViewer
         private List<int> _pointCloudIndex;
         private PointCloudNode[] _childNode;
         private int _displayListId;
-        private bool _displayListDirty = true;
         private Vector3d _minCoordinate, _maxCoordinate;
         private Vector3d _midPoint = Vector3d.Zero;
         private bool _isNodeInsideFrustum;
@@ -109,27 +108,30 @@ namespace PointCloudViewer
                 // Apply color ramp
                 if (colorType == "rgb")
                 {
-                    colorArray[0] = color.X;
-                    colorArray[1] = color.Y;
-                    colorArray[2] = color.Z;
-                    color = _pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
+                    //colorArray[0] = color.X;
+                    //colorArray[1] = color.Y;
+                    //colorArray[2] = color.Z;
+                    //color = _pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
                 }
-                else
+                if (colorType == "rainbow")
                 {
                     coordArray[0] = point.X;
                     coordArray[1] = point.Y;
                     coordArray[2] = point.Z;
-                }
-                if (colorType == "rainbow")
-                {
                     color = _pointCloudColorMapper.MapColor(ColorMode.Rainbow, coordArray, null);
                 }
                 else if (colorType == "warm")
                 {
+                    coordArray[0] = point.X;
+                    coordArray[1] = point.Y;
+                    coordArray[2] = point.Z;
                     color = _pointCloudColorMapper.MapColor(ColorMode.Warm, coordArray, null);
                 }
                 else if (colorType == "cold")
                 {
+                    coordArray[0] = point.X;
+                    coordArray[1] = point.Y;
+                    coordArray[2] = point.Z;
                     color = _pointCloudColorMapper.MapColor(ColorMode.Cold, coordArray, null);
                 }
                 GL.Color3(color.X, color.Y, color.Z);
@@ -157,7 +159,6 @@ namespace PointCloudViewer
         }
         public void UpdateDisplayList(string colorType)
         {
-            _displayListDirty = true;
             GL.DeleteLists(_displayListId, 1);
             _displayListId = 0;
             _displayListId = GL.GenLists(1);
@@ -170,10 +171,10 @@ namespace PointCloudViewer
                 var coordArray = new double[3];
                 if (colorType == "rgb")
                 {
-                    colorArray[0] = color.X;
-                    colorArray[1] = color.Y;
-                    colorArray[2] = color.Z;
-                    color = _pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
+                    //colorArray[0] = color.X;
+                    //colorArray[1] = color.Y;
+                    //colorArray[2] = color.Z;
+                    //color = _pointCloudColorMapper.MapColor(ColorMode.RGB, null, colorArray);
                 }
                 if (colorType == "rainbow")
                 {
@@ -294,36 +295,27 @@ namespace PointCloudViewer
         }
         private double CalculateDistance(Vector3d point, Vector3d lineStart, Vector3d lineEnd)
         {
-            // Calculate vectors
             Vector3d line = lineEnd - lineStart;
             Vector3d pointToStart = point - lineStart;
 
-            // Calculate cross product
             Vector3d cross = Vector3d.Cross(pointToStart, line);
 
-            // Distance formula: |cross| / |line|
             return cross.Length / line.Length;
         }
         private static bool TransformCoordinateAxes(Vector3d pointA, Vector3d pointB, Vector3d pointC, Vector3d projectionPoint, GLControl glControl1, List<Vector3d> midpoints)
         {
-            // Define the plane normal using the coefficients of the plane equation
             Vector3d edge1 = pointB - pointA;
             Vector3d edge2 = pointC - pointA;
             Vector3d planeNormal = Vector3d.Cross(edge1, edge2).Normalized();
 
-            // Normalize the plane normal
             planeNormal = planeNormal.Normalized();
 
-            // Define the new z' axis as the plane normal
             Vector3d zPrime = planeNormal;
 
-            // Define an arbitrary vector not parallel to z'
             Vector3d arbitraryVector = (Math.Abs(zPrime.X) > Math.Abs(zPrime.Z)) ? new Vector3d(-zPrime.Y, zPrime.X, 0) : new Vector3d(0, -zPrime.Z, zPrime.Y);
 
-            // Define the new x' axis as the cross product of z' and the arbitrary vector, normalized
             Vector3d xPrime = Vector3d.Cross(zPrime, arbitraryVector).Normalized();
 
-            // Define the new y' axis as the cross product of z' and x'
             Vector3d yPrime = Vector3d.Cross(zPrime, xPrime);
 
             List<PointF> pointPolygon = ConvertPolygonSpace2D(midpoints, xPrime, yPrime, glControl1);
@@ -349,7 +341,6 @@ namespace PointCloudViewer
             if (!_isNodeInsideFrustum && _isLeaf)
                 return;
 
-            // Process _points in current node
             if (_pointCloudIndex != null)
             {
                 Vector3d pointA = polygon[0];
@@ -371,7 +362,6 @@ namespace PointCloudViewer
                 }
             }
 
-            // Process child nodes
             if (_childNode != null)
             {
                 for (int i = 0; i < 8; i++)
@@ -408,13 +398,11 @@ namespace PointCloudViewer
                 double x1 = polygon[i].X, y1 = polygon[i].Y;
                 double x2 = polygon[j].X, y2 = polygon[j].Y;
 
-                // Kiểm tra nếu điểm trùng với một đỉnh của đa giác
                 if (xp == x1 && yp == y1)
                 {
                     return true;
                 }
 
-                // Kiểm tra nếu điểm nằm trên cạnh của đa giác
                 if ((y1 > yp) != (y2 > yp))
                 {
                     double intersectX = (x2 - x1) * (yp - y1) / (y2 - y1) + x1;
@@ -429,27 +417,20 @@ namespace PointCloudViewer
         }
         public static Vector3d GetProjectionPoint(Vector3d pointP, Vector3d pointA, Vector3d pointB, Vector3d pointC)
         {
-            // Calculate plane normal using _points A, B, and C
             Vector3d edge1 = pointB - pointA;
             Vector3d edge2 = pointC - pointA;
             Vector3d planeNormal = Vector3d.Cross(edge1, edge2).Normalized();
 
-            // Find a Point on the plane (any of the three given _points can be used)
             Vector3d planePoint = pointA;
 
-            // Calculate the projection Point using previously defined functions
             return GetProjectionPoint(pointP, planeNormal, planePoint);
         }
         private static Vector3d GetProjectionPoint(Vector3d pointP, Vector3d planeNormal, Vector3d planePoint)
         {
-            // Calculate the line direction vector (same as the plane normal)
             Vector3d lineDirection = planeNormal;
 
-            // Calculate the t value
             double t = Vector3d.Dot(planePoint - pointP, planeNormal) / Vector3d.Dot(lineDirection, planeNormal);
-            //t = (planePoint - pointP).planeNormal / (planeNormal.planeNormal)
 
-            // Calculate the projection Point
             Vector3d projectionPoint = pointP + t * lineDirection;
 
             return projectionPoint;
@@ -566,6 +547,7 @@ namespace PointCloudViewer
         {
             if (_root == null) return;
             _dataIndex = Enumerable.Range(0, points.Count).ToList();
+            //colorType = colorType.ToLower();
             _root.UpdatePointsColor(colorType);
             GC.Collect();
         }

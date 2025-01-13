@@ -3,28 +3,28 @@
   "WorkspaceRootPath": "D:\\Documents\\School\\Point-Cloud-Viewer\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\pointcloudoctree.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|d:\\documents\\school\\point-cloud-viewer\\pointcloudoctree.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:pointcloudoctree.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\pointcloudcolormapper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:pointcloudcolormapper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\service\\cutpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:service\\cutpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\pointcloudcolormapper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:pointcloudcolormapper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|d:\\documents\\school\\point-cloud-viewer\\service\\exportfile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\service\\exportfile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:service\\exportfile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\service\\cutpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:service\\cutpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|solutionrelative:resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D70BC842-E657-43DA-9C90-676148C5C17E}|PointCloudViewer.csproj|D:\\Documents\\School\\Point-Cloud-Viewer\\form1.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -50,7 +50,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 5,
               "Title": "ResourceManager.cs",
               "DocumentMoniker": "D:\\Documents\\School\\Point-Cloud-Viewer\\ResourceManager.cs",
               "RelativeDocumentMoniker": "ResourceManager.cs",
@@ -58,8 +58,7 @@
               "RelativeToolTip": "ResourceManager.cs",
               "ViewState": "AgIAAAMAAAAAAAAAAAAAAA0AAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-04T16:39:04.335Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-04T16:39:04.335Z"
             },
             {
               "$type": "Document",
@@ -69,36 +68,34 @@
               "RelativeDocumentMoniker": "service\\ExportFile.cs",
               "ToolTip": "D:\\Documents\\School\\Point-Cloud-Viewer\\service\\ExportFile.cs",
               "RelativeToolTip": "service\\ExportFile.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAowEQAAAAiAAAAAAAAAA==",
+              "ViewState": "AgIAAEYAAAAAAAAAAAAIwEQAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-04T16:08:23.428Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-04T16:08:23.428Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 1,
               "Title": "CutPoint.cs",
               "DocumentMoniker": "D:\\Documents\\School\\Point-Cloud-Viewer\\service\\CutPoint.cs",
               "RelativeDocumentMoniker": "service\\CutPoint.cs",
               "ToolTip": "D:\\Documents\\School\\Point-Cloud-Viewer\\service\\CutPoint.cs",
               "RelativeToolTip": "service\\CutPoint.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAABBAAAAAAAAAA==",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAiwEkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-01-04T16:07:50.342Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "PointCloudColorMapper.cs",
               "DocumentMoniker": "D:\\Documents\\School\\Point-Cloud-Viewer\\PointCloudColorMapper.cs",
               "RelativeDocumentMoniker": "PointCloudColorMapper.cs",
               "ToolTip": "D:\\Documents\\School\\Point-Cloud-Viewer\\PointCloudColorMapper.cs",
               "RelativeToolTip": "PointCloudColorMapper.cs",
-              "ViewState": "AgIAAFcAAAAAAAAAAIAwwE4AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAADUAAAAAAAAAAAAIwEAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-04T16:07:39.091Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-04T16:07:39.091Z"
             },
             {
               "$type": "Document",
@@ -108,7 +105,7 @@
               "RelativeDocumentMoniker": "PointCloudOctree.cs",
               "ToolTip": "D:\\Documents\\School\\Point-Cloud-Viewer\\PointCloudOctree.cs",
               "RelativeToolTip": "PointCloudOctree.cs",
-              "ViewState": "AgIAABgCAAAAAAAAAAAMwCYCAAAsAAAAAAAAAA==",
+              "ViewState": "AgIAALgAAAAAAAAAAAAMwNgAAABFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-01-04T16:06:32.13Z",
               "EditorCaption": ""
@@ -121,7 +118,7 @@
               "RelativeDocumentMoniker": "Form1.cs",
               "ToolTip": "D:\\Documents\\School\\Point-Cloud-Viewer\\Form1.cs",
               "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAAMUCAAAAAAAAAAAQwOsCAAA4AAAAAAAAAA==",
+              "ViewState": "AgIAAH8BAAAAAAAAAAAxwJUBAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-01-04T15:47:10.989Z",
               "EditorCaption": ""

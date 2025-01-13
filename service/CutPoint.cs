@@ -91,7 +91,7 @@ namespace PointCloudViewer.service
             Vector3d pointB = midpoints[1];
             Vector3d pointC = midpoints[2];
 
-            int pointCount = points.Count;            
+            int pointCount = points.Count;
             bool[] toRemove = ArrayPool<bool>.Shared.Rent(pointCount);
             var rangePartitioner = Partitioner.Create(0, pointCount);
 

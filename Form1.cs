@@ -43,7 +43,7 @@ namespace PointCloudViewer
         private Point _leftMouseButtonPosition;
         private Point _rightMouseButtonPosition;
         private PointCloudOctree _pco;
-        private string _pointCloudColor = "RGB";
+        private string _pointCloudColor = "rgb";
         private int _numTwoPoints = -1;
         private float _fov = (float)Math.PI / 3.0f;
         //private bool _perspectiveProjection = false;
@@ -722,10 +722,10 @@ namespace PointCloudViewer
             //}
             if (_pco == null)
             {
-                _pointCloudColor = "RGB";
+                _pointCloudColor = "rgb";
                 return;
             }
-            _pointCloudColor = "RGB";
+            _pointCloudColor = "rgb";
             _pco.UpdateColor(_points, _pointCloudColor);
             Invalidate();
             Render(_pointSize, _isShowOctreeOutline, _pointCloudColor);
@@ -781,7 +781,7 @@ namespace PointCloudViewer
             {
                 _pointCloudColor = "cold";
                 return;
-            } 
+            }
             _pointCloudColor = "cold";
             _pco.UpdateColor(_points, _pointCloudColor);
             Invalidate();
